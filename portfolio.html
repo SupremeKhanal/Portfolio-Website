@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supreme Khanal | Portfolio</title>
+    <style>
+        /* Base Variables & Reset */
+        :root {
+            --neon-green: #39ff14;
+            --neon-glow: rgba(57, 255, 20, 0.4);
+            --bg-color: #050505;
+            --surface-color: #111111;
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --glass-bg: rgba(20, 20, 20, 0.6);
+            --glass-border: rgba(57, 255, 20, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Interactive Mouse Glow Background */
+        .mouse-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(57,255,20,0.05) 0%, rgba(0,0,0,0) 70%);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 0;
+            transition: top 0.1s ease-out, left 0.1s ease-out;
+        }
+
+        /* Moving Background Particles */
+        .bg-animation {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            animation: float 20s infinite ease-in-out alternate;
+        }
+
+        .orb1 { 
+            width: 40vw; height: 40vw; 
+            background: rgba(57, 255, 20, 0.05);
+            top: -10%; left: -10%; 
+        }
+        .orb2 { 
+            width: 30vw; height: 30vw; 
+            background: rgba(0, 150, 255, 0.03); /* Subtle blue mix for depth */
+            bottom: -10%; right: -5%; 
+            animation-delay: -5s; 
+            animation-direction: alternate-reverse;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(100px, 50px) scale(1.2); }
+            100% { transform: translate(-50px, -80px) scale(0.9); }
+        }
+
+        /* Scroll Reveal Animation Classes */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Vertical Navbar */
+        .sidebar {
+            width: 280px;
+            height: 100vh;
+            background: rgba(10, 10, 10, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            position: fixed;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 3rem;
+            z-index: 10;
+        }
+
+        .nav-logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text-main);
+            margin-bottom: 3rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .nav-logo span { color: var(--neon-green); }
+
+        .sidebar ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+            position: relative;
+            padding-left: 0;
+        }
+
+        .sidebar a::before {
+            content: '';
+            position: absolute;
+            left: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 2px;
+            background: var(--neon-green);
+            transition: all 0.3s ease;
+        }
+
+        .sidebar a:hover, .sidebar a.active-link {
+            color: var(--text-main);
+            padding-left: 15px;
+        }
+
+        .sidebar a:hover::before, .sidebar a.active-link::before {
+            width: 10px;
+            box-shadow: 0 0 10px var(--neon-green);
+        }
+
+        /* Main Content Area */
+        main {
+            margin-left: 280px;
+            padding: 4rem;
+            width: calc(100% - 280px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 1;
+        }
+
+        section {
+            min-height: 100vh;
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 6rem 0;
+        }
+
+        /* Profile Section */
+        #profile {
+            align-items: center;
+            text-align: center;
+        }
+
+        /* Profile Image Container - Adjusted for Zooming/Cropping */
+        .profile-img-container {
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            padding: 4px;
+            background: linear-gradient(135deg, var(--neon-green), transparent, var(--neon-green));
+            margin-bottom: 2.5rem;
+            position: relative;
+            box-shadow: 0 0 30px rgba(57, 255, 20, 0.2);
+            animation: pulse-ring 3s infinite alternate;
+            overflow: hidden; /* Important for the zoom effect */
+        }
+
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 20px rgba(57, 255, 20, 0.2); transform: scale(1); }
+            100% { box-shadow: 0 0 40px rgba(57, 255, 20, 0.4); transform: scale(1.02); }
+        }
+
+        /* Image Styling with CSS Zoom */
+        .profile-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            /* Adjust object-position to aim at your face (center 20% usually hits the head/shoulders perfectly) */
+            object-position: center 20%; 
+            /* Increase this scale value (e.g., 1.4 or 1.5) if you need it more zoomed in */
+            transform: scale(1.35); 
+            transition: transform 0.5s ease;
+        }
+
+        .profile-img-container:hover .profile-img {
+            transform: scale(1.45); /* Zooms in slightly more on hover */
+        }
+
+        .typewriter-container {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            min-height: 70px;
+            background: linear-gradient(to right, #fff, var(--text-muted));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .cursor {
+            color: var(--neon-green);
+            -webkit-text-fill-color: var(--neon-green);
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .description {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            line-height: 1.8;
+            max-width: 650px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1s ease, transform 1s ease;
+        }
+
+        .description.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Projects Section */
+        .section-header {
+            margin-bottom: 3rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            color: var(--text-main);
+            font-weight: 700;
+        }
+
+        .section-line {
+            height: 2px;
+            background: var(--neon-green);
+            flex-grow: 1;
+            max-width: 200px;
+            box-shadow: 0 0 10px var(--neon-glow);
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2.5rem;
+        }
+
+        /* Glassmorphism Cards */
+        .card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 2.5rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+      
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at top right, rgba(57, 255, 20, 0.1), transparent 60%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none; /* THIS FIXES IT - lets you click through the glow */
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(57, 255, 20, 0.1);
+            border-color: rgba(57, 255, 20, 0.4);
+        }
+
+        .card:hover::before { opacity: 1; }
+
+        .card h3 {
+            color: var(--text-main);
+            font-size: 1.5rem;
+            position: relative;
+        }
+
+        .card h3::after {
+            content: '';
+            display: block;
+            width: 40px;
+            height: 2px;
+            background: var(--neon-green);
+            margin-top: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .card:hover h3::after { width: 80px; }
+
+        .card p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1.7;
+            flex-grow: 1;
+            position: relative;
+        }
+
+        .card-link {
+            text-decoration: none;
+            color: var(--bg-color);
+            background: var(--neon-green);
+            padding: 0.8rem 1.8rem;
+            border-radius: 30px;
+            text-align: center;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            margin-top: auto;
+            position: relative;
+            z-index: 2;
+            display: inline-block;
+            align-self: flex-start;
+        }
+
+        .card-link:hover {
+            background: #fff;
+            color: var(--bg-color);
+            box-shadow: 0 0 20px var(--neon-glow);
+            transform: scale(1.05);
+        }
+
+        /* Updated Contact Section Styling */
+        .contact-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            margin-top: 1.5rem;
+            width: 100%;
+        }
+
+        .social-link {
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 1.2rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid transparent;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            color: var(--text-main);
+            font-size: 1.05rem;
+            position: relative; /* BRINGS LINK TO FRONT */
+            z-index: 2;         /* BRINGS LINK TO FRONT */
+        }
+
+        .contact-icon {
+            color: var(--neon-green);
+            transition: all 0.3s ease;
+        }
+
+        /* Hover Effects */
+        .social-link:hover {
+            background: rgba(57, 255, 20, 0.05);
+            border-color: var(--glass-border);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(57, 255, 20, 0.1);
+        }
+
+        .social-link:hover .contact-icon {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 8px var(--neon-green));
+        }
+        /* Responsive Design */
+        @media (max-width: 900px) {
+            body { flex-direction: column; }
+            .sidebar {
+                width: 100%; height: auto; position: fixed; top: 0;
+                flex-direction: row; padding: 1.2rem; border-right: none;
+                border-bottom: 1px solid var(--glass-border);
+                justify-content: space-between;
+                align-items: center;
+            }
+            .nav-logo { margin-bottom: 0; font-size: 1.2rem; }
+            .sidebar ul { flex-direction: row; justify-content: flex-end; gap: 1.5rem; }
+            .sidebar a::before { display: none; }
+            .sidebar a:hover, .sidebar a.active-link { padding-left: 0; color: var(--neon-green); }
+            main { margin-left: 0; margin-top: 80px; width: 100%; padding: 2rem; }
+            .typewriter-container { font-size: 2rem; min-height: 50px; }
+            section { padding: 4rem 0; min-height: auto; }
+            .mouse-glow { display: none; } /* Hide on mobile for performance */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Interactive Mouse Glow -->
+    <div class="mouse-glow" id="mouseGlow"></div>
+
+    <!-- Moving Background Particles -->
+    <div class="bg-animation">
+        <div class="orb orb1"></div>
+        <div class="orb orb2"></div>
+    </div>
+
+    <!-- Vertical Navigation -->
+    <nav class="sidebar">
+        <div class="nav-logo">Sup<span>reme</span></div>
+        <ul>
+            <li><a href="#profile" class="nav-link active-link">Profile</a></li>
+            <li><a href="#projects" class="nav-link">Projects</a></li>
+            <li><a href="#contact" class="nav-link">Contact</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <!-- Profile Section -->
+        <section id="profile" class="reveal">
+            <div class="profile-img-container">
+                <!-- Ensure you upload your image here -->
+                <img src="supreme.jpg" alt="Supreme Khanal" class="profile-img">
+            </div>
+            
+            <div class="typewriter-container">
+                <span id="typewriter"></span><span class="cursor">|</span>
+            </div>
+            
+            <p class="description" id="desc">
+                An undergraduate student studying electrical engineering. My hobbies include making helpful tools with a handful of coding languages, utilizing foundational knowledge in new Ai technlogies integrating it with Modern applications. I blend engineering precision with creative web design.
+            </p>
+        </section>
+
+        <!-- Projects Section -->
+        <section id="projects" class="reveal">
+            <div class="section-header">
+                <h2 class="section-title">Projects</h2>
+                <div class="section-line"></div>
+            </div>
+            
+            <div class="cards-grid">
+                <!-- Project Card 1 -->
+                <div class="card">
+                    <h3>CBT Portal</h3>
+                    <p>A comprehensive Computer-Based Testing portal designed to upload question sets and generate an exam environment, fully analyzed with the help of AI to provide deep insights.</p>
+                    <a href="CBT.html" target="_blank" class="card-link">View Project</a>
+                </div>
+
+                <!-- Project Card 2 -->
+                <div class="card">
+                    <h3>New Project</h3>
+                    <p>A new idea is being conceptualized and developed.</p>
+                    <a href="#" target="_blank" class="card-link">View Project</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="reveal">
+            <div class="section-header">
+                <h2 class="section-title">My Contacts</h2>
+                <div class="section-line"></div>
+            </div>
+
+            <div class="card">
+                <h3 style="color: var(--neon-green)">Let's Connect</h3>
+                <p>Feel free to reach out for collaborations, engineering projects, or software inquiries. I'm always open to discussing new ideas.</p>
+                
+                <div class="contact-info">
+                    <!-- Email Item -->
+                    <a href="mailto:khanalsupreme3@gmail.com" class="contact-item social-link">
+                        <svg class="contact-icon" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        <span>khanalsupreme3@gmail.com</span>
+                    </a>
+                    
+                    <!-- LinkedIn Item -->
+                    <a href="https://www.linkedin.com/in/supreme-khanal-a233b1337/" target="_blank" class="contact-item social-link">
+                        <svg class="contact-icon" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                            <rect x="2" y="9" width="4" height="12"></rect>
+                            <circle cx="4" cy="4" r="2"></circle>
+                        </svg>
+                        <span>linkedin.com/in/supremekhanal</span>
+                    </a>
+                </div>
+                
+                <a href="mailto:khanalsupreme3@gmail.com" class="card-link" style="margin-top: 1.5rem; align-self: center;">Send an Email</a>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // 1. Mouse Glow Effect
+        const mouseGlow = document.getElementById('mouseGlow');
+        document.addEventListener('mousemove', (e) => {
+            mouseGlow.style.left = e.clientX + 'px';
+            mouseGlow.style.top = e.clientY + 'px';
+        });
+
+        // 2. Typewriter Effect
+        const textToType = "Hello, I am Supreme Khanal.";
+        const typeTarget = document.getElementById("typewriter");
+        const description = document.getElementById("desc");
+        let i = 0;
+        const typingSpeed = 80; // Slightly faster for better UX
+
+        function typeWriter() {
+            if (i < textToType.length) {
+                typeTarget.innerHTML += textToType.charAt(i);
+                i++;
+                setTimeout(typeWriter, typingSpeed);
+            } else {
+                // Trigger the fade-in animation for description
+                description.classList.add('show');
+            }
+        }
+
+        // Initialize typing effect on load
+        window.onload = () => {
+            setTimeout(typeWriter, 400); 
+        };
+
+        // 3. Scroll Reveal Animations (Intersection Observer)
+        const reveals = document.querySelectorAll('.reveal');
+        const revealOptions = {
+            threshold: 0.15,
+            rootMargin: "0px 0px -50px 0px"
+        };
+
+        const revealOnScroll = new IntersectionObserver(function(entries, observer) {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) {
+                    return;
+                } else {
+                    entry.target.classList.add('active');
+                    // Optional: stop observing once revealed
+                    // observer.unobserve(entry.target);
+                }
+            });
+        }, revealOptions);
+
+        reveals.forEach(reveal => {
+            revealOnScroll.observe(reveal);
+        });
+
+        // 4. Update Active Nav Link on Scroll
+        const sections = document.querySelectorAll('section');
+        const navLinks = document.querySelectorAll('.nav-link');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= (sectionTop - sectionHeight / 3)) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active-link');
+                if (link.getAttribute('href').includes(current)) {
+                    link.classList.add('active-link');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
