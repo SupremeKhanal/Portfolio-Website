@@ -11,7 +11,7 @@
   <style>
     body {
       background-color: #121316;
-      background-image: 
+      background-image:
         radial-gradient(circle at 50% 0%, rgba(153, 27, 27, 0.08), transparent 40%),
         linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
         linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
@@ -22,17 +22,32 @@
     ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #991b1b; }
   </style>
+  <!-- Pinned jsDelivr URLs (no redirects). unpkg @3 redirects break import maps and leave a blank page. -->
   <script type="importmap">
   {
     "imports": {
-      "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js",
-      "vue-router": "https://unpkg.com/vue-router@4/dist/vue-router.esm-browser.js"
+      "vue": "https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.esm-browser.prod.js",
+      "vue-router": "https://cdn.jsdelivr.net/npm/vue-router@4.5.1/dist/vue-router.esm-browser.js"
     }
   }
   </script>
 </head>
 <body class="font-sans text-zinc-200 min-h-screen selection:bg-red-900 selection:text-white">
-  <div id="app"></div>
-  <script type="module" src="./src/main.js"></script>
+  <div id="app">
+    <p style="text-align:center;padding:4rem;color:#a1a1aa;font-size:0.9rem">Loading CBT portal…</p>
+  </div>
+  <script type="module">
+    try {
+      await import("./src/main.js");
+    } catch (err) {
+      const app = document.getElementById("app");
+      app.innerHTML = `
+        <div style="max-width:32rem;margin:4rem auto;padding:1.5rem;border:1px solid #7f1d1d;border-radius:1rem;background:#1c1917;color:#fecaca;font:14px/1.5 sans-serif">
+          <strong>Could not start the CBT app.</strong>
+          <p style="margin:0.75rem 0 0;color:#fca5a5">${String(err && err.message ? err.message : err)}</p>
+        </div>`;
+      console.error(err);
+    }
+  </script>
 </body>
 </html>

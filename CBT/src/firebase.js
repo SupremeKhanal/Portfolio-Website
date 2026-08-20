@@ -13,7 +13,14 @@ export let db = null;
 export const googleProvider = new GoogleAuthProvider();
 
 if (isFirebaseConfigured()) {
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
+  try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+  } catch (err) {
+    console.error("Firebase failed to start:", err);
+    app = null;
+    auth = null;
+    db = null;
+  }
 }
