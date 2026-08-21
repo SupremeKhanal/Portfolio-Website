@@ -13,4 +13,4 @@ export const firebaseConfig = {
 };
 
 /** Auth UIDs that may import PYQ JSON. Also add the same UIDs to firestore.rules isAdmin(). */
-export const adminUids = [];
+export const adminUids = ["WrtJIUL3PybPTB8oeJG8NTedmgJ2"];

@@ -12,6 +12,7 @@ service cloud.firestore {
     // Must match CBT/src/config.js adminUids. Empty = no PYQ writes.
     function isAdmin() {
       return signedIn() && request.auth.uid in [
+        "WrtJIUL3PybPTB8oeJG8NTedmgJ2"
       ];
     }
 
