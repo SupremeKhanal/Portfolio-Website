@@ -12,6 +12,10 @@ export default {
       this.loading = true;
       try {
         await signInGoogle();
+        
+        // Force the window to reload automatically on success
+        window.location.reload();
+        
       } catch (err) {
         this.error = err.message;
       } finally {
