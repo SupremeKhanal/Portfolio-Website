@@ -2,8 +2,9 @@ import { reactive } from "vue";
 import {
   onAuthStateChanged,
   signInWithPopup,
+  signInWithRedirect,
   signOut as fbSignOut
-} from "https://gstatic.com";
+} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 import { auth, googleProvider, isFirebaseConfigured } from "../firebase.js";
 import { getUserProfile, upsertUserProfile } from "../lib/db.js";
 import { adminUids } from "../config.js";
@@ -52,6 +53,10 @@ export async function signInGoogle() {
   try {
     await signInWithPopup(auth, googleProvider);
   } catch (err) {
+    if (err.code === "auth/popup-blocked") {
+      await signInWithRedirect(auth, googleProvider);
+      return;
+    }
     throw err;
   }
 }
