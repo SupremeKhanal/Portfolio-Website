@@ -1,8 +1,8 @@
 import { reactive } from "vue";
 import {
   onAuthStateChanged,
-  signInWithRedirect, // Changed from signInWithPopup
-  getRedirectResult,   // Added to capture redirect data securely
+  signInWithRedirect,
+  getRedirectResult,
   signOut as fbSignOut
 } from "https://gstatic.com";
 import { auth, googleProvider, isFirebaseConfigured } from "../firebase.js";
@@ -29,7 +29,7 @@ export async function refreshProfile() {
 }
 
 if (isFirebaseConfigured() && auth) {
-  // Securely listen to incoming redirect tokens when page lands back from Google
+  // Capture the redirect result cleanly when landing back
   getRedirectResult(auth)
     .then(async (result) => {
       if (result?.user) {
@@ -38,7 +38,7 @@ if (isFirebaseConfigured() && auth) {
       }
     })
     .catch((err) => {
-      console.error("Authentication redirect error:", err);
+      console.error("Auth redirect completion error:", err);
       authState.error = err.message;
     });
 
@@ -64,7 +64,7 @@ if (isFirebaseConfigured() && auth) {
 export async function signInGoogle() {
   if (!isFirebaseConfigured()) throw new Error("Firebase is not configured. Copy src/config.example.js to src/config.js.");
   try {
-    // Force direct page routing rather than open vulnerable/blocked popups
+    // Uses redirection to bypass popup opener restriction bugs safely
     await signInWithRedirect(auth, googleProvider);
   } catch (err) {
     throw err;
@@ -72,5 +72,10 @@ export async function signInGoogle() {
 }
 
 export async function signOut() {
-  if (auth) await fbSignOut(auth);
+  if (auth) {
+    await fbSignOut(auth);
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.reload();
+  }
 }

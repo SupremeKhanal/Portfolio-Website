@@ -10,15 +10,9 @@ export default {
     'authState.user': {
       handler(newUser) {
         if (newUser) {
-          // Change the loading text to let the user know it's redirecting
           this.loading = true;
-          
-          // Wait 1 second (1000ms) before changing pages or refreshing
-          setTimeout(() => {
-            // Option A: Hard refresh and go to dashboard (Recommended for your setup)
-            window.location.href = window.location.origin + window.location.pathname + '#/dashboard';
-            window.location.reload();
-          }, 1000);
+          // Clean dynamic interior push transition
+          this.$router.push('/dashboard');
         }
       },
       immediate: true
@@ -54,7 +48,7 @@ export default {
       </div>
       <p v-if="error" class="text-sm text-rose-400">{{ error }}</p>
       <button :disabled="!configured || loading" @click="login" class="w-full bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white font-semibold py-3 rounded-xl text-sm">
-        {{ loading ? 'Redirecting to Dashboard…' : 'Continue with Google' }}
+        {{ loading ? 'Opening Secure Portal…' : 'Continue with Google' }}
       </button>
     </div>
   </div>
