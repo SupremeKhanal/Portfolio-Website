@@ -12,10 +12,7 @@ export default {
       this.loading = true;
       try {
         await signInGoogle();
-        
-        // Force the window to reload automatically on success
-        window.location.reload();
-        
+        // Removed window.location.reload() to let router handles the transition smoothly
       } catch (err) {
         this.error = err.message;
       } finally {

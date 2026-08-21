@@ -41,20 +41,35 @@ function waitForAuth() {
 
 router.beforeEach(async (to) => {
   await waitForAuth();
+  
   if (!isFirebaseConfigured()) {
     if (to.name !== "login") return { name: "login" };
     return true;
   }
+  
+  // If not logged in, redirect to login page
   if (!authState.user) {
     if (to.meta.public) return true;
     return { name: "login" };
   }
+  
+  // If user is already on login view but authenticated, move them away
+  if (to.name === "login") {
+    if (authState.profile && !authState.profile.examMode) {
+      return { name: "onboarding" };
+    }
+    return { name: "dashboard" };
+  }
+  
+  // Fallback profile redirection evaluation
   if (!authState.profile?.examMode && to.name !== "onboarding") {
     return { name: "onboarding" };
   }
-  if (authState.profile?.examMode && (to.name === "login" || to.name === "onboarding")) {
+  
+  if (authState.profile?.examMode && to.name === "onboarding") {
     return { name: "dashboard" };
   }
+  
   return true;
 });
 
