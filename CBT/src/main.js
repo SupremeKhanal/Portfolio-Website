@@ -1,6 +1,6 @@
 import { createApp } from "vue";
-import App from "/CBT/src/App.js";
-import router from "/CBT/src/router.js";
+import App from "./App.js";
+import router from "./router.js";
 
 const app = createApp(App);
 app.use(router);
