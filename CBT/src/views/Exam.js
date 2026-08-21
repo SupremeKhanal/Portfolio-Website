@@ -63,7 +63,7 @@ export default {
         });
         this.$router.replace({ name: "result", params: { id } });
       } catch (err) {
-        alert("Could not save this attempt: " + err.message);
+        alert("Could not save this attempt: " + (err.code === "permission-denied" || /insufficient permissions/i.test(err.message || "") ? "Firestore rules are blocking writes. Paste CBT/firestore.rules into Firebase Console → Firestore → Rules and Publish." : err.message));
         this.submitting = false;
       }
     }

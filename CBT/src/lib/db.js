@@ -16,6 +16,15 @@ import {
 import { db } from "../firebase.js";
 import { answersToMap, computeResults, sanitizeQuestions } from "./scoring.js";
 
+export function isPermissionDenied(err) {
+  return err?.code === "permission-denied" || /insufficient permissions/i.test(err?.message || "");
+}
+
+export function firestorePermissionHint(err) {
+  if (!isPermissionDenied(err)) return err.message;
+  return "Firestore blocked this write. In Firebase Console → Firestore Database → Rules, paste CBT/firestore.rules and click Publish. Default rules deny quota/attempts.";
+}
+
 export function localDateKey() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -51,21 +60,34 @@ export async function getUserProfile(uid) {
 
 export async function getQuotaCount(uid) {
   const date = localDateKey();
-  const snap = await getDoc(doc(db, "quota", `${uid}_${date}`));
-  return snap.exists() ? snap.data().count || 0 : 0;
+  try {
+    const snap = await getDoc(doc(db, "quota", `${uid}_${date}`));
+    return snap.exists() ? snap.data().count || 0 : 0;
+  } catch (err) {
+    if (isPermissionDenied(err)) return 0;
+    throw err;
+  }
 }
 
 export async function incrementQuota(uid) {
   const date = localDateKey();
   const ref = doc(db, "quota", `${uid}_${date}`);
-  await runTransaction(db, async (tx) => {
-    const snap = await tx.get(ref);
-    const count = snap.exists() ? snap.data().count || 0 : 0;
-    if (count >= 10) {
-      throw new Error("Daily upload quota reached (10 conversions/day). Try again tomorrow.");
+  try {
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      const count = snap.exists() ? snap.data().count || 0 : 0;
+      if (count >= 10) {
+        throw new Error("Daily upload quota reached (10 conversions/day). Try again tomorrow.");
+      }
+      tx.set(ref, { userId: uid, date, count: count + 1 });
+    });
+  } catch (err) {
+    if (err.message?.includes("Daily upload quota")) throw err;
+    if (isPermissionDenied(err)) {
+      throw new Error(firestorePermissionHint(err));
     }
-    tx.set(ref, { userId: uid, date, count: count + 1 });
-  });
+    throw err;
+  }
 }
 
 export async function listAttempts(uid, examMode) {

@@ -1,5 +1,5 @@
 import { authState } from "../state/auth.js";
-import { createdAtDate, getQuotaCount, incrementQuota, listAttempts } from "../lib/db.js";
+import { createdAtDate, firestorePermissionHint, getQuotaCount, incrementQuota, isPermissionDenied, listAttempts } from "../lib/db.js";
 import { processSourceWithGemini } from "../lib/gemini.js";
 import { examSession, loadQuestions } from "../state/session.js";
 import { formatTime, presetParams, subjectsForMode } from "../lib/scoring.js";
@@ -118,13 +118,21 @@ export default {
           examMode: this.mode,
           onStatus: (s) => (this.processingStatus = s)
         });
-        await incrementQuota(authState.user.uid);
-        this.quota += 1;
         const title = this.files.length === 1 ? this.files[0].name : `Image set (${this.files.length} files)`;
         loadQuestions(questions, { title, source: "upload", mode: this.mode });
+        try {
+          await incrementQuota(authState.user.uid);
+          this.quota += 1;
+        } catch (quotaErr) {
+          console.warn(quotaErr);
+          alert(
+            `Imported ${questions.length} questions, but daily quota was not saved in Firebase.\n\n${firestorePermissionHint(quotaErr)}`
+          );
+          return;
+        }
         alert(`Imported ${questions.length} questions with solutions.`);
       } catch (err) {
-        alert(err.message);
+        alert(isPermissionDenied(err) ? firestorePermissionHint(err) : err.message);
       } finally {
         this.isProcessing = false;
         this.processingStatus = "";

@@ -1,0 +1,42 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // Doc id is "{uid}_{YYYY-MM-DD}"
+    match /quota/{docId} {
+      allow read, write: if signedIn() && docId.matches('^' + request.auth.uid + '_.*');
+    }
+
+    match /attempts/{id} {
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow read: if signedIn() && resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    match /attemptDetails/{id} {
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow read: if signedIn() && resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    match /pyqSets/{setId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn();
+      match /questions/{qid} {
+        allow read: if signedIn();
+        allow write: if signedIn();
+      }
+    }
+  }
+}
