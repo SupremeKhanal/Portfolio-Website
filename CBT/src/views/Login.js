@@ -1,25 +1,30 @@
 import { isFirebaseConfigured } from "../firebase.js";
-import { signInGoogle, authState } from "../state/auth.js"; // Imported authState here
+import { signInGoogle, authState } from "../state/auth.js";
 
 export default {
   name: "LoginView",
   data() {
     return { error: "", loading: false, configured: isFirebaseConfigured() };
   },
-  // Added a watch property to observe login success state changes actively
   watch: {
     'authState.user': {
       handler(newUser) {
         if (newUser) {
-          // Send the user to dashboard immediately when auth settles
-          this.$router.push('/dashboard');
+          // Change the loading text to let the user know it's redirecting
+          this.loading = true;
+          
+          // Wait 1 second (1000ms) before changing pages or refreshing
+          setTimeout(() => {
+            // Option A: Hard refresh and go to dashboard (Recommended for your setup)
+            window.location.href = window.location.origin + window.location.pathname + '#/dashboard';
+            window.location.reload();
+          }, 1000);
         }
       },
       immediate: true
     }
   },
   computed: {
-    // Expose the global auth state to this component's scope
     authState() {
       return authState;
     }
@@ -32,7 +37,6 @@ export default {
         await signInGoogle();
       } catch (err) {
         this.error = err.message;
-      } finally {
         this.loading = false;
       }
     }
@@ -50,7 +54,7 @@ export default {
       </div>
       <p v-if="error" class="text-sm text-rose-400">{{ error }}</p>
       <button :disabled="!configured || loading" @click="login" class="w-full bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white font-semibold py-3 rounded-xl text-sm">
-        {{ loading ? 'Opening Google…' : 'Continue with Google' }}
+        {{ loading ? 'Redirecting to Dashboard…' : 'Continue with Google' }}
       </button>
     </div>
   </div>
