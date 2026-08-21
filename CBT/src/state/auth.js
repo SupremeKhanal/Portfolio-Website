@@ -1,10 +1,10 @@
 import { reactive } from "vue";
 import {
   onAuthStateChanged,
-  signInWithPopup,
-  signInWithRedirect,
+  signInWithRedirect, // Changed from signInWithPopup
+  getRedirectResult,   // Added to capture redirect data securely
   signOut as fbSignOut
-} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+} from "https://gstatic.com";
 import { auth, googleProvider, isFirebaseConfigured } from "../firebase.js";
 import { getUserProfile, upsertUserProfile } from "../lib/db.js";
 import { adminUids } from "../config.js";
@@ -29,6 +29,19 @@ export async function refreshProfile() {
 }
 
 if (isFirebaseConfigured() && auth) {
+  // Securely listen to incoming redirect tokens when page lands back from Google
+  getRedirectResult(auth)
+    .then(async (result) => {
+      if (result?.user) {
+        await upsertUserProfile(result.user);
+        authState.profile = await getUserProfile(result.user.uid);
+      }
+    })
+    .catch((err) => {
+      console.error("Authentication redirect error:", err);
+      authState.error = err.message;
+    });
+
   onAuthStateChanged(auth, async (user) => {
     authState.user = user;
     try {
@@ -51,12 +64,9 @@ if (isFirebaseConfigured() && auth) {
 export async function signInGoogle() {
   if (!isFirebaseConfigured()) throw new Error("Firebase is not configured. Copy src/config.example.js to src/config.js.");
   try {
-    await signInWithPopup(auth, googleProvider);
+    // Force direct page routing rather than open vulnerable/blocked popups
+    await signInWithRedirect(auth, googleProvider);
   } catch (err) {
-    if (err.code === "auth/popup-blocked") {
-      await signInWithRedirect(auth, googleProvider);
-      return;
-    }
     throw err;
   }
 }
