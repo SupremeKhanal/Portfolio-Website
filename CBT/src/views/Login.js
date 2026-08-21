@@ -1,27 +1,10 @@
 import { isFirebaseConfigured } from "../firebase.js";
-import { signInGoogle, authState } from "../state/auth.js";
+import { signInGoogle } from "../state/auth.js";
 
 export default {
   name: "LoginView",
   data() {
     return { error: "", loading: false, configured: isFirebaseConfigured() };
-  },
-  watch: {
-    'authState.user': {
-      handler(newUser) {
-        if (newUser) {
-          this.loading = true;
-          // Clean dynamic interior push transition
-          this.$router.push('/dashboard');
-        }
-      },
-      immediate: true
-    }
-  },
-  computed: {
-    authState() {
-      return authState;
-    }
   },
   methods: {
     async login() {
@@ -29,8 +12,13 @@ export default {
       this.loading = true;
       try {
         await signInGoogle();
+        
+        // Force the window to reload automatically on success
+        window.location.reload();
+        
       } catch (err) {
         this.error = err.message;
+      } finally {
         this.loading = false;
       }
     }
@@ -48,7 +36,7 @@ export default {
       </div>
       <p v-if="error" class="text-sm text-rose-400">{{ error }}</p>
       <button :disabled="!configured || loading" @click="login" class="w-full bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white font-semibold py-3 rounded-xl text-sm">
-        {{ loading ? 'Opening Secure Portal…' : 'Continue with Google' }}
+        {{ loading ? 'Opening Google…' : 'Continue with Google' }}
       </button>
     </div>
   </div>
