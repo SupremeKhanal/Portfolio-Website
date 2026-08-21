@@ -9,13 +9,48 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
+    // Must match CBT/src/config.js adminUids. Empty = no PYQ writes.
+    function isAdmin() {
+      return signedIn() && request.auth.uid in [
+      ];
+    }
+
+    function quotaIdOwned(docId) {
+      return signedIn()
+        && docId.matches('^' + request.auth.uid + '_[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    function quotaPayloadValid(docId) {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['userId', 'date', 'count'])
+        && d.userId == request.auth.uid
+        && d.date is string
+        && d.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && docId == request.auth.uid + '_' + d.date
+        && d.count is int
+        && d.count >= 1
+        && d.count <= 10;
+    }
+
     match /users/{uid} {
       allow read, write: if isOwner(uid);
     }
 
-    // Doc id is "{uid}_{YYYY-MM-DD}"
+    // Doc id is "{uid}_{YYYY-MM-DD}". Count may only start at 1 and increase by 1.
     match /quota/{docId} {
-      allow read, write: if signedIn() && docId.matches('^' + request.auth.uid + '_.*');
+      allow get: if quotaIdOwned(docId);
+      allow list: if false;
+      allow create: if quotaIdOwned(docId)
+        && quotaPayloadValid(docId)
+        && request.resource.data.count == 1;
+      allow update: if quotaIdOwned(docId)
+        && quotaPayloadValid(docId)
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.date == resource.data.date
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['count'])
+        && request.resource.data.count == resource.data.count + 1;
+      allow delete: if false;
     }
 
     match /attempts/{id} {
@@ -32,10 +67,10 @@ service cloud.firestore {
 
     match /pyqSets/{setId} {
       allow read: if signedIn();
-      allow create, update: if signedIn();
+      allow create, update, delete: if isAdmin();
       match /questions/{qid} {
         allow read: if signedIn();
-        allow write: if signedIn();
+        allow create, update, delete: if isAdmin();
       }
     }
   }

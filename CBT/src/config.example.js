@@ -14,5 +14,9 @@ export const firebaseConfig = {
   appId: "YOUR_APP_ID"
 };
 
-/** Comma-separated Auth UIDs allowed to import PYQ JSON in Settings. */
+/**
+ * Auth UIDs allowed to import PYQ JSON in Settings.
+ * Copy the same UIDs into firestore.rules → isAdmin(), then Publish rules.
+ * The Settings UI check is not enough; Firestore enforces PYQ writes.
+ */
 export const adminUids = [];

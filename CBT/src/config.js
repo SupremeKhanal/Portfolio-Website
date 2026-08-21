@@ -12,4 +12,5 @@ export const firebaseConfig = {
   measurementId: "G-VJ1M46KCSQ"
 };
 
+/** Auth UIDs that may import PYQ JSON. Also add the same UIDs to firestore.rules isAdmin(). */
 export const adminUids = [];
