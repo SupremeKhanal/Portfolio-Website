@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory } from "vue-router";
+import { watch } from "vue";
 import { authState } from "./state/auth.js";
 import { isFirebaseConfigured } from "./firebase.js";
-
 import Login from "./views/Login.js";
 import Onboarding from "./views/Onboarding.js";
 import Dashboard from "./views/Dashboard.js";
@@ -24,21 +24,37 @@ const router = createRouter({
   ]
 });
 
+function waitForAuth() {
+  if (authState.ready) return Promise.resolve();
+  return new Promise((resolve) => {
+    const stop = watch(
+      () => authState.ready,
+      (ready) => {
+        if (ready) {
+          stop();
+          resolve();
+        }
+      }
+    );
+  });
+}
+
 router.beforeEach(async (to) => {
+  await waitForAuth();
   if (!isFirebaseConfigured()) {
     if (to.name !== "login") return { name: "login" };
     return true;
   }
-
   if (!authState.user) {
     if (to.meta.public) return true;
     return { name: "login" };
   }
-
-  if (to.name === "login") {
+  if (!authState.profile?.examMode && to.name !== "onboarding") {
+    return { name: "onboarding" };
+  }
+  if (authState.profile?.examMode && (to.name === "login" || to.name === "onboarding")) {
     return { name: "dashboard" };
   }
-
   return true;
 });
 
