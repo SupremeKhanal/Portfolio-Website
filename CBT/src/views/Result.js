@@ -49,16 +49,16 @@ export default {
     }
   },
   template: `
-  <div class="max-w-6xl mx-auto p-6 space-y-6">
-    <div class="flex items-center justify-between">
+  <div class="max-w-6xl mx-auto px-4 py-6 space-y-6">
+    <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <div class="text-xs font-bold text-red-500 uppercase tracking-widest">Saved examination report</div>
-        <h1 class="text-xl font-bold text-zinc-100 mt-1">Question review</h1>
+        <p class="text-xs font-semibold uppercase tracking-wider text-sky-400">Examination report</p>
+        <h1 class="text-xl font-semibold text-slate-50 mt-1">Question review</h1>
       </div>
-      <router-link to="/dashboard" class="bg-red-900 hover:bg-red-800 text-white px-5 py-2.5 rounded-lg font-bold text-xs border border-red-700">← Dashboard</router-link>
+      <router-link to="/dashboard" class="bg-slate-800 hover:bg-slate-700 text-slate-100 px-4 py-2.5 rounded-xl font-medium text-sm">Dashboard</router-link>
     </div>
-    <div v-if="loading" class="text-sm text-zinc-400">Loading full paper, answers, and explanations…</div>
-    <div v-else-if="error" class="bg-red-950/40 border border-red-900 text-red-300 text-sm rounded-xl p-4">{{ error }}</div>
+    <div v-if="loading" class="text-sm text-slate-400">Loading report…</div>
+    <div v-else-if="error" class="bg-rose-500/10 border border-rose-500/30 text-rose-200 text-sm rounded-2xl p-4">{{ error }}</div>
     <ResultReport v-else :attempt="attempt" :details="details" />
   </div>
   `

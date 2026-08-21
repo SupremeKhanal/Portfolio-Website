@@ -2,12 +2,20 @@ import { authState, signOut } from "../state/auth.js";
 
 export default {
   name: "NavBar",
+  data() {
+    return { menuOpen: false };
+  },
   computed: {
     user() {
       return authState.user;
     },
     mode() {
       return authState.profile?.examMode || "—";
+    }
+  },
+  watch: {
+    "$route.path"() {
+      this.menuOpen = false;
     }
   },
   methods: {
@@ -17,24 +25,29 @@ export default {
     }
   },
   template: `
-  <header class="border-b border-zinc-800 bg-zinc-900/80 backdrop-blur sticky top-0 z-30">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <router-link to="/dashboard" class="flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-red-700"></span>
-          <span class="font-bold text-zinc-100 text-sm">CBT Portal</span>
-        </router-link>
-        <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md border border-red-900/60 bg-red-950/40 text-red-300">{{ mode }}</span>
-      </div>
-      <nav class="flex items-center gap-1 text-xs font-semibold">
-        <router-link to="/dashboard" class="px-3 py-2 rounded-lg text-zinc-400 hover:text-zinc-100" active-class="bg-zinc-800 text-zinc-100">Dashboard</router-link>
-        <router-link to="/pyq" class="px-3 py-2 rounded-lg text-zinc-400 hover:text-zinc-100" active-class="bg-zinc-800 text-zinc-100">PYQ Bank</router-link>
-        <router-link to="/settings" class="px-3 py-2 rounded-lg text-zinc-400 hover:text-zinc-100" active-class="bg-zinc-800 text-zinc-100">Settings</router-link>
+  <header class="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/90 backdrop-blur-md">
+    <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
+      <router-link to="/dashboard" class="flex items-center gap-2 min-w-0">
+        <span class="w-2 h-2 rounded-full bg-sky-400 shrink-0"></span>
+        <span class="font-semibold text-slate-100 text-sm truncate">CBT Portal</span>
+        <span class="hidden sm:inline text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-900 border border-slate-700 text-slate-400">{{ mode }}</span>
+      </router-link>
+      <nav class="hidden md:flex items-center gap-1 text-sm">
+        <router-link to="/dashboard" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-100" active-class="bg-slate-800 text-slate-100">Dashboard</router-link>
+        <router-link to="/pyq" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-100" active-class="bg-slate-800 text-slate-100">PYQ</router-link>
+        <router-link to="/settings" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-100" active-class="bg-slate-800 text-slate-100">Settings</router-link>
       </nav>
-      <div class="flex items-center gap-3">
-        <img v-if="user?.photoURL" :src="user.photoURL" class="w-8 h-8 rounded-full border border-zinc-700" alt="" />
-        <button @click="logout" class="text-xs text-zinc-400 hover:text-zinc-100 border border-zinc-800 rounded-lg px-3 py-1.5">Sign out</button>
+      <div class="flex items-center gap-2">
+        <img v-if="user?.photoURL" :src="user.photoURL" class="hidden sm:block w-8 h-8 rounded-full border border-slate-700" alt="" />
+        <button @click="logout" class="hidden md:inline-flex text-xs text-slate-400 hover:text-slate-100 border border-slate-700 rounded-lg px-3 py-1.5">Sign out</button>
+        <button @click="menuOpen = !menuOpen" class="md:hidden w-10 h-10 rounded-lg border border-slate-700 text-slate-200" aria-label="Menu">☰</button>
       </div>
+    </div>
+    <div v-if="menuOpen" class="md:hidden border-t border-slate-800 bg-slate-950 px-4 py-3 space-y-1">
+      <router-link to="/dashboard" class="block px-3 py-2.5 rounded-lg text-sm text-slate-300">Dashboard</router-link>
+      <router-link to="/pyq" class="block px-3 py-2.5 rounded-lg text-sm text-slate-300">PYQ Bank</router-link>
+      <router-link to="/settings" class="block px-3 py-2.5 rounded-lg text-sm text-slate-300">Settings</router-link>
+      <button @click="logout" class="block w-full text-left px-3 py-2.5 rounded-lg text-sm text-slate-400">Sign out</button>
     </div>
   </header>
   `

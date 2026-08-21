@@ -17,7 +17,7 @@ const router = createRouter({
     { path: "/login", name: "login", component: Login, meta: { public: true, hideNav: true } },
     { path: "/onboarding", name: "onboarding", component: Onboarding, meta: { hideNav: true } },
     { path: "/dashboard", name: "dashboard", component: Dashboard },
-    { path: "/exam", name: "exam", component: Exam, meta: { hideNav: true } },
+    { path: "/exam", name: "exam", component: Exam, meta: { hideNav: true, hideCredit: true } },
     { path: "/result/:id", name: "result", component: Result, meta: { hideNav: true } },
     { path: "/pyq", name: "pyq", component: PyqLibrary },
     { path: "/settings", name: "settings", component: Settings }
