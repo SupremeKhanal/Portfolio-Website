@@ -1,10 +1,28 @@
 import { isFirebaseConfigured } from "../firebase.js";
-import { signInGoogle } from "../state/auth.js";
+import { signInGoogle, authState } from "../state/auth.js"; // Imported authState here
 
 export default {
   name: "LoginView",
   data() {
     return { error: "", loading: false, configured: isFirebaseConfigured() };
+  },
+  // Added a watch property to observe login success state changes actively
+  watch: {
+    'authState.user': {
+      handler(newUser) {
+        if (newUser) {
+          // Send the user to dashboard immediately when auth settles
+          this.$router.push('/dashboard');
+        }
+      },
+      immediate: true
+    }
+  },
+  computed: {
+    // Expose the global auth state to this component's scope
+    authState() {
+      return authState;
+    }
   },
   methods: {
     async login() {
@@ -12,7 +30,6 @@ export default {
       this.loading = true;
       try {
         await signInGoogle();
-        // Removed window.location.reload() to let router handles the transition smoothly
       } catch (err) {
         this.error = err.message;
       } finally {
