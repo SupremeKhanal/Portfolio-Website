@@ -4,6 +4,7 @@ import { presetParams } from "../lib/scoring.js";
 export const examSession = reactive({
   questions: [],
   title: "",
+  label: "",
   source: "upload",
   params: presetParams("IOE"),
   userAnswers: {},
@@ -17,6 +18,7 @@ export function resetSession(mode) {
   stopTimer();
   examSession.questions = [];
   examSession.title = "";
+  examSession.label = "";
   examSession.source = "upload";
   examSession.params = presetParams(mode || "IOE");
   examSession.userAnswers = {};
@@ -25,9 +27,10 @@ export function resetSession(mode) {
   examSession.timeSpent = 0;
 }
 
-export function loadQuestions(questions, { title, source, mode } = {}) {
+export function loadQuestions(questions, { title, source, mode, label } = {}) {
   examSession.questions = questions;
   examSession.title = title || "Untitled paper";
+  examSession.label = label || "";
   examSession.source = source || "upload";
   examSession.params = { ...presetParams(mode || "IOE"), ...examSession.params };
   examSession.userAnswers = {};

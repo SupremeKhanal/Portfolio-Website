@@ -33,8 +33,17 @@ service cloud.firestore {
         && d.count <= 10;
     }
 
+    // ---- Users: field-whitelisted writes prevent role escalation ----
     match /users/{uid} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasOnly([
+          'displayName','email','photoURL','createdAt','updatedAt','examMode'
+        ]);
+      allow update: if isOwner(uid)
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['displayName','email','photoURL','updatedAt','examMode']);
+      allow delete: if false;
     }
 
     // Doc id is "{uid}_{YYYY-MM-DD}". Count may only start at 1 and increase by 1.
@@ -54,10 +63,23 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ---- Attempts: payload-validated, supports label updates ----
     match /attempts/{id} {
-      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.keys().hasOnly([
+          'userId','examMode','source','title','createdAt','score','totalMarks',
+          'percent','passed','correct','wrong','skipped','guessed','timeSpent',
+          'questionCount','passPercent','negativeMarkingRate','subjectStats','label'
+        ])
+        && request.resource.data.questionCount is int
+        && request.resource.data.questionCount <= 300;
       allow read: if signedIn() && resource.data.userId == request.auth.uid;
-      allow update, delete: if false;
+      // Allow only label edits on own attempts
+      allow update: if signedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['label']);
+      allow delete: if false;
     }
 
     match /attemptDetails/{id} {
@@ -73,6 +95,11 @@ service cloud.firestore {
         allow read: if signedIn();
         allow create, update, delete: if isAdmin();
       }
+    }
+
+    // ---- Deny-all fallback: any path not matched above is blocked ----
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

@@ -58,6 +58,7 @@ export default {
           examMode: this.mode,
           source: examSession.source,
           title: examSession.title,
+          label: examSession.label,
           questions: examSession.questions,
           userAnswers: examSession.userAnswers,
           guessedAnswers: examSession.guessedAnswers,
@@ -94,6 +95,7 @@ export default {
         <div class="flex items-center gap-2 min-w-0 flex-1">
           <span class="w-2 h-2 rounded-full bg-sky-400 shrink-0"></span>
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-400 truncate">{{ mode }} exam</span>
+          <span v-if="session.label" class="text-[10px] px-2 py-0.5 rounded-full bg-sky-900/60 border border-sky-700 text-sky-300 truncate max-w-[120px]">{{ session.label }}</span>
         </div>
         <div class="font-mono text-sm font-semibold text-sky-300 tabular-nums px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800">
           {{ formatTime(session.timeLeft) }}

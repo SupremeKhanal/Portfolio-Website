@@ -16,19 +16,32 @@ import {
 import { db } from "../firebase.js";
 import { answersToMap, computeResults, sanitizeQuestions } from "./scoring.js";
 
+/* ── Error helpers (sanitized) ─────────────────────────────────────── */
+
 export function isPermissionDenied(err) {
   return err?.code === "permission-denied" || /insufficient permissions/i.test(err?.message || "");
 }
 
 export function firestorePermissionHint(err) {
-  if (!isPermissionDenied(err)) return err.message;
-  return "Firestore blocked this write. In Firebase Console → Firestore Database → Rules, paste CBT/firestore.rules and click Publish. Default rules deny quota/attempts.";
+  if (!isPermissionDenied(err)) return "An unexpected database error occurred. Please try again.";
+  return "Firestore blocked this write. In Firebase Console → Firestore Database → Rules, paste CBT/firestore.rules and click Publish.";
 }
+
+/** Scrub internal Firestore paths/details from error messages */
+function sanitizeError(msg) {
+  if (!msg) return "An unexpected error occurred.";
+  // Strip document paths like "projects/xxx/databases/yyy/documents/..."
+  return String(msg).replace(/projects\/[^\s]+/g, "[internal]");
+}
+
+/* ── Helpers ───────────────────────────────────────────────────────── */
 
 export function localDateKey() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
+
+/* ── User Profiles ─────────────────────────────────────────────────── */
 
 export async function upsertUserProfile(user, extra = {}) {
   const ref = doc(db, "users", user.uid);
@@ -58,6 +71,8 @@ export async function getUserProfile(uid) {
   return snap.exists() ? snap.data() : null;
 }
 
+/* ── Quota ──────────────────────────────────────────────────────────── */
+
 export async function getQuotaCount(uid) {
   const date = localDateKey();
   try {
@@ -86,9 +101,11 @@ export async function incrementQuota(uid) {
     if (isPermissionDenied(err)) {
       throw new Error(firestorePermissionHint(err));
     }
-    throw err;
+    throw new Error(sanitizeError(err.message));
   }
 }
+
+/* ── Attempts ──────────────────────────────────────────────────────── */
 
 export async function listAttempts(uid, examMode) {
   const q = query(
@@ -131,6 +148,7 @@ export async function saveAttempt({
   examMode,
   source,
   title,
+  label,
   questions,
   userAnswers,
   guessedAnswers,
@@ -147,6 +165,7 @@ export async function saveAttempt({
     examMode,
     source: source || "upload",
     title: title || "Untitled paper",
+    label: label || "",
     createdAt: serverTimestamp(),
     score: stats.finalScore,
     totalMarks: stats.totalPossibleMarks,
@@ -182,6 +201,15 @@ export async function saveAttempt({
   });
   return attemptRef.id;
 }
+
+/* ── Update attempt label ──────────────────────────────────────────── */
+
+export async function updateAttemptLabel(attemptId, label) {
+  const ref = doc(db, "attempts", attemptId);
+  await updateDoc(ref, { label: label || "" });
+}
+
+/* ── PYQ Sets ──────────────────────────────────────────────────────── */
 
 export async function listPyqSets(examMode) {
   const snap = await getDocs(collection(db, "pyqSets"));

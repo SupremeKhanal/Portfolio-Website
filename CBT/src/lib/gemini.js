@@ -1,3 +1,17 @@
+/* ── Rate-limiter for Gemini calls ──────────────────────────────────── */
+const GEMINI_WINDOW_MS = 60_000;
+const MAX_GEMINI_PER_MIN = 3;
+const geminiLog = [];
+
+function isGeminiThrottled() {
+  const now = Date.now();
+  while (geminiLog.length && geminiLog[0] < now - GEMINI_WINDOW_MS) geminiLog.shift();
+  return geminiLog.length >= MAX_GEMINI_PER_MIN;
+}
+function recordGeminiCall() { geminiLog.push(Date.now()); }
+
+/* ── Helpers ───────────────────────────────────────────────────────── */
+
 export function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -96,10 +110,31 @@ function questionsFromParsed(parsed) {
   return questions.filter((q) => q && (q.text || q.options));
 }
 
-export async function processSourceWithGemini({ apiKey, files, examMode, onStatus }) {
-  if (!apiKey) throw new Error("Please enter your Gemini API Key in Settings.");
-  if (!files?.length) throw new Error("Please select a PDF or up to 10 images.");
+/** Validate API key format before sending */
+function validateApiKey(key) {
+  if (!key || typeof key !== "string") return false;
+  return key.length >= 20 && /^[A-Za-z0-9_-]+$/.test(key);
+}
 
+/** Fetch with timeout */
+async function fetchWithTimeout(url, options, timeoutMs = 120_000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/* ── PDF/Image → MCQ extraction ────────────────────────────────────── */
+
+export async function processSourceWithGemini({ apiKey, files, examMode, onStatus }) {
+  if (!validateApiKey(apiKey)) throw new Error("Invalid Gemini API key. Please check your key in Settings.");
+  if (!files?.length) throw new Error("Please select a PDF or up to 10 images.");
+  if (isGeminiThrottled()) throw new Error("Too many AI requests. Please wait a moment before trying again.");
+
+  recordGeminiCall();
   onStatus?.("Reading files...");
   const parts = [];
   for (const file of files) {
@@ -130,7 +165,7 @@ Rules:
   parts.push({ text: prompt });
 
   async function callOnce() {
-    const response = await fetch(
+    const response = await fetchWithTimeout(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
@@ -139,7 +174,8 @@ Rules:
           contents: [{ parts }],
           generationConfig: { response_mime_type: "application/json", temperature: 0.1 }
         })
-      }
+      },
+      120_000
     );
     const data = await response.json();
     if (data.error) throw new Error(data.error.message);
@@ -162,4 +198,57 @@ Rules:
     }
     throw err;
   }
+}
+
+/* ── AI Mistake Analysis (on-demand) ───────────────────────────────── */
+
+export async function generateMistakeAnalysis({ apiKey, stats, subjectStats, examMode, guessedCount, guessedCorrectCount, guessedWrongCount, totalQuestions }) {
+  if (!validateApiKey(apiKey)) throw new Error("Set your Gemini API key in Settings to use AI analysis.");
+  if (isGeminiThrottled()) throw new Error("Too many AI requests. Please wait a moment.");
+
+  recordGeminiCall();
+
+  const guessAccuracy = guessedCount > 0 ? ((guessedCorrectCount / guessedCount) * 100).toFixed(1) : "N/A";
+
+  let subjectBreakdown = "";
+  if (subjectStats && Object.keys(subjectStats).length) {
+    subjectBreakdown = Object.entries(subjectStats)
+      .map(([subj, s]) => `${subj}: ${s.correct} correct, ${s.wrong} wrong, ${s.unattempted} skipped out of ${s.totalMarks} marks`)
+      .join("\n");
+  }
+
+  const prompt = `You are an exam performance analyst for a ${examMode} entrance exam student. Analyze this exam result and provide:
+
+1. **Mistake Pattern Analysis**: Identify which subjects/areas are weakest based on the data.
+2. **Guess Quality**: The student guessed on ${guessedCount} questions with ${guessAccuracy}% accuracy.${guessedCount > 0 && (guessedCorrectCount / guessedCount) < 0.6 ? " WARNING: Guess accuracy is below 60% — they should guess less or improve elimination strategy." : ""}
+3. **Actionable Study Recommendations**: Specific, prioritized advice on what to study next.
+4. **Positive Reinforcement**: Note what they did well.
+
+Exam Data:
+- Score: ${stats.finalScore}/${stats.totalPossibleMarks} (${stats.percent.toFixed(1)}%)
+- Correct: ${stats.correctCount}, Wrong: ${stats.wrongCount}, Skipped: ${stats.skippedCount}
+- Total Questions: ${totalQuestions}
+- Guessed: ${guessedCount} (Correct: ${guessedCorrectCount}, Wrong: ${guessedWrongCount})
+${subjectBreakdown ? `\nSubject Breakdown:\n${subjectBreakdown}` : ""}
+
+Keep your response concise (under 250 words). Use bullet points. Be encouraging but honest.`;
+
+  const response = await fetchWithTimeout(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.7 }
+      })
+    },
+    60_000
+  );
+
+  const data = await response.json();
+  if (data.error) throw new Error(data.error.message);
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error("AI returned an empty analysis.");
+  return text;
 }

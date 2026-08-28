@@ -1,6 +1,22 @@
 import { isFirebaseConfigured } from "../firebase.js";
 import { signInGoogle } from "../state/auth.js";
 
+/* Map Firebase error codes to safe, user-friendly messages */
+function safifyAuthError(err) {
+  const map = {
+    "auth/popup-closed-by-user": "Sign-in popup was closed. Please try again.",
+    "auth/cancelled-popup-request": "Another sign-in is already in progress.",
+    "auth/network-request-failed": "Network error — check your internet connection.",
+    "auth/too-many-requests": "Too many attempts. Please wait a moment.",
+    "auth/user-disabled": "This account has been disabled. Contact support.",
+    "auth/popup-blocked": "Pop-up was blocked by your browser. Allow pop-ups and try again."
+  };
+  if (err.code && map[err.code]) return map[err.code];
+  // Don't leak raw Firebase internals
+  if (/firebase/i.test(err.message || "")) return "Authentication failed. Please try again.";
+  return err.message || "An unexpected error occurred.";
+}
+
 export default {
   name: "LoginView",
   data() {
@@ -18,7 +34,7 @@ export default {
         await signInGoogle();
         window.location.reload();
       } catch (err) {
-        this.error = err.message;
+        this.error = safifyAuthError(err);
       } finally {
         this.loading = false;
       }

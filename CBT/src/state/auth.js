@@ -48,8 +48,30 @@ if (isFirebaseConfigured() && auth) {
   authState.ready = true;
 }
 
+/* ── Login rate-limiter ─────────────────────────────────────────────── */
+const LOGIN_WINDOW_MS = 60_000;   // 1 minute window
+const MAX_LOGIN_ATTEMPTS = 5;     // max attempts per window
+const loginLog = [];              // timestamps of recent attempts
+
+function isLoginThrottled() {
+  const now = Date.now();
+  // Purge entries older than the window
+  while (loginLog.length && loginLog[0] < now - LOGIN_WINDOW_MS) loginLog.shift();
+  return loginLog.length >= MAX_LOGIN_ATTEMPTS;
+}
+
+function recordLoginAttempt() {
+  loginLog.push(Date.now());
+}
+
 export async function signInGoogle() {
   if (!isFirebaseConfigured()) throw new Error("Firebase is not configured. Copy src/config.example.js to src/config.js.");
+
+  if (isLoginThrottled()) {
+    throw new Error("Too many sign-in attempts. Please wait a minute and try again.");
+  }
+  recordLoginAttempt();
+
   try {
     await signInWithPopup(auth, googleProvider);
   } catch (err) {
