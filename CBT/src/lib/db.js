@@ -118,6 +118,9 @@ export async function listAttempts(uid, examMode) {
     const snap = await getDocs(q);
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   } catch (err) {
+    if (err?.code === "failed-precondition" || /index/i.test(err?.message || "")) {
+      console.warn("Firestore index note: Create composite index for fastest query speed. Fallback in-memory sorting active.", err);
+    }
     // Fallback if composite index is not ready yet.
     const snap = await getDocs(query(collection(db, "attempts"), where("userId", "==", uid)));
     return snap.docs
