@@ -101,7 +101,7 @@ export function parseGeminiJson(rawText) {
   }
   throw new Error(
     "The AI returned invalid JSON (often from LaTeX backslashes). Try converting the same PDF again. " +
-      (lastError?.message || "")
+    (lastError?.message || "")
   );
 }
 
@@ -263,7 +263,7 @@ ${subjectBreakdown ? `\nSubject Breakdown:\n${subjectBreakdown}` : ""}
 Keep your response concise (under 250 words). Use bullet points. Be encouraging but honest.`;
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${key}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
