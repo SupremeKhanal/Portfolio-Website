@@ -116,8 +116,7 @@ export function cleanKey(raw) {
 }
 
 export function validateApiKey(key) {
-  const k = cleanKey(key);
-  return k.length >= 10;
+  return Boolean(cleanKey(key));
 }
 
 /** Fetch with timeout */
@@ -141,25 +140,24 @@ export async function testGeminiApiKey(apiKey) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: "Respond with the word: READY" }] }]
+        contents: [{ parts: [{ text: "Hello, reply with OK" }] }]
       })
     },
-    15_000
+    20_000
   );
   const data = await response.json();
   if (data.error) {
-    throw new Error(data.error.message || "Google AI rejected this key.");
+    throw new Error(data.error.message || "Google AI returned an error with this key.");
   }
-  const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "OK";
-  return reply.trim();
+  return "OK";
 }
 
 /* ── PDF/Image → MCQ extraction ────────────────────────────────────── */
 
 export async function processSourceWithGemini({ apiKey, files, examMode, onStatus }) {
   const key = cleanKey(apiKey);
-  if (!validateApiKey(key)) {
-    throw new Error("Please paste your Gemini API key in Settings (or in the upload box above). Get a free key at aistudio.google.com");
+  if (!key) {
+    throw new Error("Please enter your Gemini API key in Settings.");
   }
   if (!files?.length) throw new Error("Please select a PDF or up to 10 images.");
   if (isGeminiThrottled()) throw new Error("Too many AI requests. Please wait a moment before trying again.");
@@ -209,10 +207,10 @@ Rules:
     );
     const data = await response.json();
     if (data.error) {
-      if ((data.error.code === 404 || data.error.status === "NOT_FOUND" || /not found/i.test(data.error.message || "")) && modelName !== "gemini-2.0-flash") {
+      if ((data.error.code === 404 || /not found/i.test(data.error.message || "")) && modelName !== "gemini-2.0-flash") {
         return callOnce("gemini-2.0-flash");
       }
-      throw new Error(data.error.message || "Google AI returned an error. Please verify your API key.");
+      throw new Error(data.error.message || "Google AI error. Please check your key in Settings.");
     }
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!rawText) throw new Error("Gemini returned an empty response. Try again or check the PDF.");
