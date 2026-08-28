@@ -134,16 +134,15 @@ async function fetchWithTimeout(url, options, timeoutMs = 120_000) {
 export async function testGeminiApiKey(apiKey) {
   const key = cleanKey(apiKey);
   if (!key) throw new Error("Please enter an API key first.");
-  const response = await fetchWithTimeout(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${key}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: "Hello, reply with OK" }] }]
       })
-    },
-    20_000
+    }
   );
   const data = await response.json();
   if (data.error) {
@@ -192,9 +191,9 @@ Rules:
 
   parts.push({ text: prompt });
 
-  async function callOnce(modelName = "gemini-1.5-flash") {
-    const response = await fetchWithTimeout(
-      `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${key}`,
+  async function callOnce() {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${key}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -202,30 +201,26 @@ Rules:
           contents: [{ parts }],
           generationConfig: { response_mime_type: "application/json", temperature: 0.1 }
         })
-      },
-      120_000
+      }
     );
     const data = await response.json();
     if (data.error) {
-      if ((data.error.code === 404 || /not found/i.test(data.error.message || "")) && modelName !== "gemini-2.0-flash") {
-        return callOnce("gemini-2.0-flash");
-      }
-      throw new Error(data.error.message || "Google AI error. Please check your key in Settings.");
+      throw new Error(data.error.message || "Google AI error.");
     }
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!rawText) throw new Error("Gemini returned an empty response. Try again or check the PDF.");
+    if (!rawText) throw new Error("Gemini returned an empty response.");
     return questionsFromParsed(parseGeminiJson(rawText));
   }
 
   onStatus?.("Extracting MCQs…");
   try {
-    const questions = await callOnce("gemini-1.5-flash");
+    const questions = await callOnce();
     if (!questions.length) throw new Error("No questions were extracted.");
     return questions;
   } catch (err) {
     if (/invalid JSON|Unexpected token|Bad escaped|escaped character/i.test(err.message || "")) {
       onStatus?.("Repairing AI JSON, retrying…");
-      const questions = await callOnce("gemini-1.5-flash");
+      const questions = await callOnce();
       if (!questions.length) throw new Error("No questions were extracted.");
       return questions;
     }
@@ -237,7 +232,7 @@ Rules:
 
 export async function generateMistakeAnalysis({ apiKey, stats, subjectStats, examMode, guessedCount, guessedCorrectCount, guessedWrongCount, totalQuestions }) {
   const key = cleanKey(apiKey);
-  if (!validateApiKey(key)) throw new Error("Set your Gemini API key in Settings to use AI analysis.");
+  if (!key) throw new Error("Set your Gemini API key in Settings to use AI analysis.");
   if (isGeminiThrottled()) throw new Error("Too many AI requests. Please wait a moment.");
 
   recordGeminiCall();
@@ -267,31 +262,21 @@ ${subjectBreakdown ? `\nSubject Breakdown:\n${subjectBreakdown}` : ""}
 
 Keep your response concise (under 250 words). Use bullet points. Be encouraging but honest.`;
 
-  async function callAnalysis(modelName = "gemini-1.5-flash") {
-    const response = await fetchWithTimeout(
-      `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${key}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.7 }
-        })
-      },
-      60_000
-    );
-
-    const data = await response.json();
-    if (data.error) {
-      if ((data.error.code === 404 || data.error.status === "NOT_FOUND" || /not found/i.test(data.error.message || "")) && modelName !== "gemini-2.0-flash") {
-        return callAnalysis("gemini-2.0-flash");
-      }
-      throw new Error(data.error.message || "Google AI error. Check your API key.");
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${key}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.7 }
+      })
     }
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) throw new Error("AI returned an empty analysis.");
-    return text;
-  }
+  );
 
-  return callAnalysis("gemini-1.5-flash");
+  const data = await response.json();
+  if (data.error) throw new Error(data.error.message || "Google AI error.");
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error("AI returned an empty analysis.");
+  return text;
 }
