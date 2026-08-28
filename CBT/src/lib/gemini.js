@@ -1,14 +1,11 @@
-/* ── Rate-limiter for Gemini calls ──────────────────────────────────── */
-const GEMINI_WINDOW_MS = 60_000;
-const MAX_GEMINI_PER_MIN = 3;
-const geminiLog = [];
-
-function isGeminiThrottled() {
-  const now = Date.now();
-  while (geminiLog.length && geminiLog[0] < now - GEMINI_WINDOW_MS) geminiLog.shift();
-  return geminiLog.length >= MAX_GEMINI_PER_MIN;
-}
-function recordGeminiCall() { geminiLog.push(Date.now()); }
+/* ── Candidate models with automatic failover ────────────────────────── */
+const GEMINI_MODELS = [
+  "gemini-3.6-flash",
+  "gemini-2.0-flash",
+  "gemini-1.5-flash",
+  "gemini-2.5-flash",
+  "gemini-1.5-pro"
+];
 
 /* ── Helpers ───────────────────────────────────────────────────────── */
 
@@ -119,36 +116,40 @@ export function validateApiKey(key) {
   return Boolean(cleanKey(key));
 }
 
-/** Fetch with timeout */
-async function fetchWithTimeout(url, options, timeoutMs = 120_000) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, { ...options, signal: controller.signal });
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-/** Quick verification to test if an API key works */
+/** Quick verification to test if an API key works across any active model */
 export async function testGeminiApiKey(apiKey) {
   const key = cleanKey(apiKey);
   if (!key) throw new Error("Please enter an API key first.");
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${key}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: "Hello, reply with OK" }] }]
-      })
+
+  let lastError = null;
+  for (const model of GEMINI_MODELS) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: "Respond with OK" }] }]
+          })
+        }
+      );
+      const data = await response.json();
+      if (!data.error) {
+        return `OK (using ${model})`;
+      }
+      lastError = data.error.message || `Error on ${model}`;
+      if (/API_KEY_INVALID|API key not valid|key has expired/i.test(lastError)) {
+        throw new Error(lastError);
+      }
+    } catch (err) {
+      if (/API_KEY_INVALID|API key not valid|key has expired/i.test(err.message)) {
+        throw err;
+      }
+      lastError = err.message;
     }
-  );
-  const data = await response.json();
-  if (data.error) {
-    throw new Error(data.error.message || "Google AI returned an error with this key.");
   }
-  return "OK";
+  throw new Error(lastError || "Google AI error. Please check your API key.");
 }
 
 /* ── PDF/Image → MCQ extraction ────────────────────────────────────── */
@@ -159,9 +160,7 @@ export async function processSourceWithGemini({ apiKey, files, examMode, onStatu
     throw new Error("Please enter your Gemini API key in Settings.");
   }
   if (!files?.length) throw new Error("Please select a PDF or up to 10 images.");
-  if (isGeminiThrottled()) throw new Error("Too many AI requests. Please wait a moment before trying again.");
 
-  recordGeminiCall();
   onStatus?.("Reading files...");
   const parts = [];
   for (const file of files) {
@@ -191,9 +190,9 @@ Rules:
 
   parts.push({ text: prompt });
 
-  async function callOnce() {
+  async function callModel(model) {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${key}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -205,7 +204,7 @@ Rules:
     );
     const data = await response.json();
     if (data.error) {
-      throw new Error(data.error.message || "Google AI error.");
+      throw new Error(data.error.message || `Error on ${model}`);
     }
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!rawText) throw new Error("Gemini returned an empty response.");
@@ -213,19 +212,34 @@ Rules:
   }
 
   onStatus?.("Extracting MCQs…");
-  try {
-    const questions = await callOnce();
-    if (!questions.length) throw new Error("No questions were extracted.");
-    return questions;
-  } catch (err) {
-    if (/invalid JSON|Unexpected token|Bad escaped|escaped character/i.test(err.message || "")) {
-      onStatus?.("Repairing AI JSON, retrying…");
-      const questions = await callOnce();
-      if (!questions.length) throw new Error("No questions were extracted.");
-      return questions;
+  let lastErr = null;
+
+  for (const model of GEMINI_MODELS) {
+    try {
+      onStatus?.(`Extracting MCQs with ${model}…`);
+      const questions = await callModel(model);
+      if (questions && questions.length > 0) {
+        return questions;
+      }
+    } catch (err) {
+      console.warn(`Model ${model} failed:`, err.message);
+      lastErr = err;
+      if (/invalid JSON|Unexpected token|Bad escaped|escaped character/i.test(err.message || "")) {
+        try {
+          onStatus?.(`Repairing AI response, retrying ${model}…`);
+          const questions = await callModel(model);
+          if (questions && questions.length > 0) return questions;
+        } catch (retryErr) {
+          lastErr = retryErr;
+        }
+      }
+      if (/API_KEY_INVALID|API key not valid|key has expired/i.test(err.message)) {
+        throw new Error("Invalid Gemini API key. Please check your key at aistudio.google.com/app/apikey");
+      }
     }
-    throw err;
   }
+
+  throw new Error(lastErr?.message || "Failed to extract questions. Please try again.");
 }
 
 /* ── AI Mistake Analysis (on-demand) ───────────────────────────────── */
@@ -233,9 +247,6 @@ Rules:
 export async function generateMistakeAnalysis({ apiKey, stats, subjectStats, examMode, guessedCount, guessedCorrectCount, guessedWrongCount, totalQuestions }) {
   const key = cleanKey(apiKey);
   if (!key) throw new Error("Set your Gemini API key in Settings to use AI analysis.");
-  if (isGeminiThrottled()) throw new Error("Too many AI requests. Please wait a moment.");
-
-  recordGeminiCall();
 
   const guessAccuracy = guessedCount > 0 ? ((guessedCorrectCount / guessedCount) * 100).toFixed(1) : "N/A";
 
@@ -262,21 +273,30 @@ ${subjectBreakdown ? `\nSubject Breakdown:\n${subjectBreakdown}` : ""}
 
 Keep your response concise (under 250 words). Use bullet points. Be encouraging but honest.`;
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${key}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.7 }
-      })
-    }
-  );
+  let lastErr = null;
+  for (const model of GEMINI_MODELS) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.7 }
+          })
+        }
+      );
 
-  const data = await response.json();
-  if (data.error) throw new Error(data.error.message || "Google AI error.");
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error("AI returned an empty analysis.");
-  return text;
+      const data = await response.json();
+      if (data.error) throw new Error(data.error.message || "Google AI error.");
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) return text;
+    } catch (err) {
+      lastErr = err;
+      if (/API_KEY_INVALID|API key not valid/i.test(err.message)) throw err;
+    }
+  }
+
+  throw new Error(lastErr?.message || "AI analysis is currently unavailable. Please try again in a moment.");
 }
