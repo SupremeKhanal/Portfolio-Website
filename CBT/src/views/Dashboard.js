@@ -9,7 +9,7 @@ import {
   listAttempts,
   updateAttemptLabel
 } from "../lib/db.js";
-import { processSourceWithGemini } from "../lib/gemini.js";
+import { processSourceWithGemini, testGeminiApiKey } from "../lib/gemini.js";
 import { examSession, loadQuestions } from "../state/session.js";
 import { formatTime, presetParams, subjectsForMode } from "../lib/scoring.js";
 
@@ -30,6 +30,9 @@ export default {
       loading: true,
       showUpload: false,
       examLabel: "",
+      apiKeyInput: localStorage.getItem(GEMINI_KEY) || "",
+      keyTestStatus: "",
+      testingKey: false,
       editingLabelId: null,
       editingLabelValue: "",
       regivingId: null
@@ -86,12 +89,32 @@ export default {
       return examSession.params;
     }
   },
+  watch: {
+    apiKeyInput(val) {
+      const clean = (val || "").trim();
+      localStorage.setItem(GEMINI_KEY, clean);
+    }
+  },
   async mounted() {
     examSession.params = { ...presetParams(this.mode), ...examSession.params };
     await this.refresh();
   },
   methods: {
     formatTime,
+
+    async testKey() {
+      if (!this.apiKeyInput) { this.keyTestStatus = "Please enter an API key."; return; }
+      this.testingKey = true;
+      this.keyTestStatus = "Testing key with Google AI…";
+      try {
+        await testGeminiApiKey(this.apiKeyInput);
+        this.keyTestStatus = "✓ API key is valid and working!";
+      } catch (err) {
+        this.keyTestStatus = "✕ " + err.message;
+      } finally {
+        this.testingKey = false;
+      }
+    },
 
     /** Score-bar colour based on percentage */
     scoreColor(pct) {
@@ -141,7 +164,11 @@ export default {
 
     async convert() {
       if (this.quota >= this.maxQuota) { alert("Daily upload quota reached (10/day)."); return; }
-      const apiKey = localStorage.getItem(GEMINI_KEY) || "";
+      const apiKey = this.apiKeyInput || localStorage.getItem(GEMINI_KEY) || "";
+      if (!apiKey.trim()) {
+        alert("Please enter your Gemini API key in the field below (or in Settings).");
+        return;
+      }
       this.isProcessing = true;
       try {
         const questions = await processSourceWithGemini({
@@ -331,6 +358,33 @@ export default {
           placeholder="e.g. Chapter 5 Practice, Mock Test 3"
           class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-sky-500"
         />
+      </div>
+
+      <!-- Gemini Key Section with Test Button -->
+      <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-2">
+        <div class="flex items-center justify-between">
+          <label class="text-xs font-semibold text-slate-300">Gemini API Key</label>
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-[11px] text-sky-400 hover:text-sky-300">Get free key ↗</a>
+        </div>
+        <div class="flex gap-2">
+          <input
+            v-model="apiKeyInput"
+            type="password"
+            placeholder="Paste Google AI Studio key (starts with AIzaSy...)"
+            class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-100 focus:outline-none focus:border-sky-500"
+          />
+          <button
+            @click="testKey"
+            :disabled="testingKey || !apiKeyInput"
+            type="button"
+            class="bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-200 text-xs px-3 py-2 rounded-lg font-medium border border-slate-700 shrink-0"
+          >
+            {{ testingKey ? 'Testing…' : 'Test Key' }}
+          </button>
+        </div>
+        <p v-if="keyTestStatus" class="text-[11px]" :class="keyTestStatus.startsWith('✓') ? 'text-emerald-400' : 'text-rose-400'">
+          {{ keyTestStatus }}
+        </p>
       </div>
 
       <!-- PDF / Image toggle -->

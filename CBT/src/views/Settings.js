@@ -1,6 +1,7 @@
 import { authState, isAdmin, refreshProfile } from "../state/auth.js";
 import { upsertUserProfile } from "../lib/db.js";
 import { importPyqSet } from "../lib/db.js";
+import { testGeminiApiKey } from "../lib/gemini.js";
 
 const GEMINI_KEY = "cbt_gemini_key";
 
@@ -12,7 +13,8 @@ export default {
       mode: authState.profile?.examMode || "IOE",
       pyqJson: "",
       pyqMeta: { examMode: "IOE", title: "", year: new Date().getFullYear(), label: "" },
-      status: ""
+      status: "",
+      testingKey: false
     };
   },
   computed: {
@@ -28,6 +30,19 @@ export default {
     }
   },
   methods: {
+    async testKey() {
+      if (!this.apiKey) { this.status = "Please enter an API key."; return; }
+      this.testingKey = true;
+      this.status = "Testing key with Google AI…";
+      try {
+        await testGeminiApiKey(this.apiKey);
+        this.status = "✓ API key is valid and working with Google AI!";
+      } catch (err) {
+        this.status = "✕ " + err.message;
+      } finally {
+        this.testingKey = false;
+      }
+    },
     async saveMode() {
       await upsertUserProfile(authState.user, { examMode: this.mode });
       await refreshProfile();
@@ -52,10 +67,17 @@ export default {
     <h1 class="text-2xl font-semibold text-slate-50 tracking-tight">Settings</h1>
 
     <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
-      <h2 class="text-sm font-medium text-slate-200">Gemini API key</h2>
-      <p class="text-xs text-slate-500">Stored only on this device.</p>
-      <input type="password" v-model="apiKey" placeholder="Paste AI Studio key" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm font-mono outline-none focus:border-sky-500" />
-      <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-sky-400 text-sm">Get API key ↗</a>
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-medium text-slate-200">Gemini API key</h2>
+        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-sky-400 text-xs hover:text-sky-300">Get free key ↗</a>
+      </div>
+      <p class="text-xs text-slate-500">Stored privately in your browser localStorage (never sent to our database or GitHub).</p>
+      <div class="flex gap-2">
+        <input type="password" v-model="apiKey" placeholder="Paste AI Studio key (starts with AIzaSy...)" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm font-mono outline-none focus:border-sky-500 text-slate-100" />
+        <button @click="testKey" :disabled="testingKey || !apiKey" class="bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-200 text-xs px-4 py-2.5 rounded-xl font-medium border border-slate-700 shrink-0">
+          {{ testingKey ? 'Testing…' : 'Test Key' }}
+        </button>
+      </div>
     </section>
 
     <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">

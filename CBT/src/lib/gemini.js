@@ -110,14 +110,14 @@ function questionsFromParsed(parsed) {
   return questions.filter((q) => q && (q.text || q.options));
 }
 
-/** Validate API key format before sending */
-function cleanKey(raw) {
-  return String(raw || "").trim();
+/** Validate and clean API key format */
+export function cleanKey(raw) {
+  return String(raw || "").trim().replace(/^["']|["']$/g, "");
 }
 
-function validateApiKey(key) {
+export function validateApiKey(key) {
   const k = cleanKey(key);
-  return k.length >= 15;
+  return k.length >= 10;
 }
 
 /** Fetch with timeout */
@@ -131,11 +131,36 @@ async function fetchWithTimeout(url, options, timeoutMs = 120_000) {
   }
 }
 
+/** Quick verification to test if an API key works */
+export async function testGeminiApiKey(apiKey) {
+  const key = cleanKey(apiKey);
+  if (!key) throw new Error("Please enter an API key first.");
+  const response = await fetchWithTimeout(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: "Respond with the word: READY" }] }]
+      })
+    },
+    15_000
+  );
+  const data = await response.json();
+  if (data.error) {
+    throw new Error(data.error.message || "Google AI rejected this key.");
+  }
+  const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "OK";
+  return reply.trim();
+}
+
 /* ── PDF/Image → MCQ extraction ────────────────────────────────────── */
 
 export async function processSourceWithGemini({ apiKey, files, examMode, onStatus }) {
   const key = cleanKey(apiKey);
-  if (!validateApiKey(key)) throw new Error("Please enter your Gemini API key in Settings (get one free at aistudio.google.com).");
+  if (!validateApiKey(key)) {
+    throw new Error("Please paste your Gemini API key in Settings (or in the upload box above). Get a free key at aistudio.google.com");
+  }
   if (!files?.length) throw new Error("Please select a PDF or up to 10 images.");
   if (isGeminiThrottled()) throw new Error("Too many AI requests. Please wait a moment before trying again.");
 
@@ -169,7 +194,7 @@ Rules:
 
   parts.push({ text: prompt });
 
-  async function callOnce(modelName = "gemini-2.5-flash") {
+  async function callOnce(modelName = "gemini-1.5-flash") {
     const response = await fetchWithTimeout(
       `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${key}`,
       {
@@ -184,10 +209,10 @@ Rules:
     );
     const data = await response.json();
     if (data.error) {
-      if (data.error.status === "NOT_FOUND" && modelName !== "gemini-1.5-flash") {
-        return callOnce("gemini-1.5-flash");
+      if ((data.error.code === 404 || data.error.status === "NOT_FOUND" || /not found/i.test(data.error.message || "")) && modelName !== "gemini-2.0-flash") {
+        return callOnce("gemini-2.0-flash");
       }
-      throw new Error(data.error.message || "Google AI returned an error. Please verify your API key in Settings.");
+      throw new Error(data.error.message || "Google AI returned an error. Please verify your API key.");
     }
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!rawText) throw new Error("Gemini returned an empty response. Try again or check the PDF.");
@@ -196,13 +221,13 @@ Rules:
 
   onStatus?.("Extracting MCQs…");
   try {
-    const questions = await callOnce("gemini-2.5-flash");
+    const questions = await callOnce("gemini-1.5-flash");
     if (!questions.length) throw new Error("No questions were extracted.");
     return questions;
   } catch (err) {
     if (/invalid JSON|Unexpected token|Bad escaped|escaped character/i.test(err.message || "")) {
       onStatus?.("Repairing AI JSON, retrying…");
-      const questions = await callOnce("gemini-2.5-flash");
+      const questions = await callOnce("gemini-1.5-flash");
       if (!questions.length) throw new Error("No questions were extracted.");
       return questions;
     }
@@ -244,7 +269,7 @@ ${subjectBreakdown ? `\nSubject Breakdown:\n${subjectBreakdown}` : ""}
 
 Keep your response concise (under 250 words). Use bullet points. Be encouraging but honest.`;
 
-  async function callAnalysis(modelName = "gemini-2.5-flash") {
+  async function callAnalysis(modelName = "gemini-1.5-flash") {
     const response = await fetchWithTimeout(
       `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${key}`,
       {
@@ -260,8 +285,8 @@ Keep your response concise (under 250 words). Use bullet points. Be encouraging 
 
     const data = await response.json();
     if (data.error) {
-      if (data.error.status === "NOT_FOUND" && modelName !== "gemini-1.5-flash") {
-        return callAnalysis("gemini-1.5-flash");
+      if ((data.error.code === 404 || data.error.status === "NOT_FOUND" || /not found/i.test(data.error.message || "")) && modelName !== "gemini-2.0-flash") {
+        return callAnalysis("gemini-2.0-flash");
       }
       throw new Error(data.error.message || "Google AI error. Check your API key.");
     }
@@ -270,5 +295,5 @@ Keep your response concise (under 250 words). Use bullet points. Be encouraging 
     return text;
   }
 
-  return callAnalysis("gemini-2.5-flash");
+  return callAnalysis("gemini-1.5-flash");
 }
