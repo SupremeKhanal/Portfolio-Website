@@ -20,7 +20,11 @@ export default {
   },
   watch: {
     apiKey(val) {
-      localStorage.setItem(GEMINI_KEY, val);
+      const clean = (val || "").trim();
+      localStorage.setItem(GEMINI_KEY, clean);
+      if (clean) {
+        this.status = "API key saved locally.";
+      }
     }
   },
   methods: {
