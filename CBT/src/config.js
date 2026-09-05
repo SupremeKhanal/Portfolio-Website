@@ -11,7 +11,7 @@ export const firebaseConfig = {
   appId: "1:929686502565:web:eb8c3e2fe16699c31b614c",
   measurementId: "G-VJ1M46KCSQ",
   // Optional: reCAPTCHA v3 site key for Firebase App Check (leave empty if not enabled)
-  recaptchaSiteKey: ""
+  recaptchaSiteKey: "6Le2LZ0tAAAAAGa4m3iIEKewqlOGbD4m7blOPpUz"
 };
 
 /** Auth UIDs that may import PYQ JSON. Also add the same UIDs to firestore.rules isAdmin(). */
