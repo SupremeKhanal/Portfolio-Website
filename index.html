@@ -61,8 +61,30 @@
             width: 100vw; height: 100vh;
             z-index: 0;
             pointer-events: none;
-            opacity: 0.38;
+            opacity: 0.16; /* Soft ambient rain so foreground text remains perfectly readable */
             transition: opacity 0.5s ease;
+        }
+
+        /* Typewriter Head & Character Fade-In */
+        .typing-head {
+            color: var(--neon-green);
+            text-shadow: 0 0 14px var(--neon-green);
+            font-weight: 700;
+            animation: head-flicker 0.1s infinite alternate;
+        }
+        @keyframes head-flicker {
+            0% { opacity: 0.75; }
+            100% { opacity: 1; }
+        }
+
+        .desc-fade {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+        .desc-fade.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         /* Interactive Mouse Glow Light */
@@ -876,12 +898,12 @@
             </div>
 
             <!-- Concise & Readable Description (Prompt Specific) -->
-            <p class="description" id="desc">
+            <p class="description desc-fade" id="desc">
                 An <strong>undergraduate student studying electrical engineering</strong> who loves crafting <strong>helpful tools</strong>, modern web experiences, and AI-driven applications.
             </p>
 
             <!-- Tech Badges -->
-            <div class="tech-chips">
+            <div class="tech-chips desc-fade">
                 <div class="chip"><span>⚡</span> Electrical Engineering</div>
                 <div class="chip"><span>🛠️</span> Daily Driven Tools</div>
                 <div class="chip"><span>🤖</span> AI Integration</div>
@@ -1136,8 +1158,12 @@
                 ctx.fillStyle = '#ffffff';
                 ctx.fillText(char, x, y);
 
-                // Trail character in matrix green
-                ctx.fillStyle = '#00ff66';
+                // Glowing bright leading head character (softened for readability)
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+                ctx.fillText(char, x, y);
+
+                // Trail character in matrix green (softened)
+                ctx.fillStyle = 'rgba(0, 255, 102, 0.65)';
                 ctx.fillText(char, x, y - fontSize);
 
                 if (y > canvas.height && Math.random() > 0.975) {
@@ -1152,52 +1178,97 @@
         const matrixToggleBtn = document.getElementById('matrixToggleBtn');
         matrixToggleBtn.addEventListener('click', () => {
             matrixActive = !matrixActive;
-            canvas.style.opacity = matrixActive ? '0.38' : '0';
+            canvas.style.opacity = matrixActive ? '0.16' : '0';
             matrixToggleBtn.textContent = matrixActive ? 'RAIN [ON]' : 'RAIN [OFF]';
             playBeep(650, 0.05);
         });
 
         // ==========================================
-        // 3. HACKER MATRIX TEXT DECRYPTION EFFECT
+        // 3. HACKER TYPEWRITER WITH PROGRESSIVE SCRAMBLE & FADE-IN
         // ==========================================
         const targetHeading = "Hello, I am Supreme Khanal.";
         const typewriterEl = document.getElementById('hacker-typewriter');
-        const glyphs = '0123456789ABCDEF$#@%&<>!~+=*';
+        const descEl = document.getElementById('desc');
+        const techChipsEl = document.querySelector('.tech-chips');
+        const scramblePool = '0123456789ABCDEF!<>~/*+=';
 
-        function scrambleDecrypt(element, finalText, callback) {
-            let iteration = 0;
-            const speed = 25; // ms per step
+        function typewriterWithScramble(element, fullText, onDone) {
+            let index = 0;
+            let lockedStr = '';
+            let scrambleCount = 0;
+            const maxScramble = 3; // 3 quick flips per character before locking
 
-            const interval = setInterval(() => {
-                element.innerHTML = finalText
-                    .split("")
-                    .map((letter, index) => {
-                        if (index < iteration) {
-                            if (finalText.slice(index).startsWith("Supreme")) {
-                                return `<span class="highlight">${letter}</span>`;
-                            }
-                            return letter;
-                        }
-                        return glyphs[Math.floor(Math.random() * glyphs.length)];
-                    })
-                    .join("");
+            function escapeHtml(str) {
+                return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            }
 
-                if (iteration % 3 === 0) {
-                    playBeep(1200 + Math.random() * 400, 0.02, 'sine', 0.02);
+            function render(locked, activeGlyph) {
+                let output = '';
+                const supremeKeyword = 'Supreme';
+                const supremeIdx = locked.indexOf(supremeKeyword);
+
+                if (supremeIdx !== -1) {
+                    const before = locked.slice(0, supremeIdx);
+                    const supreme = locked.slice(supremeIdx, supremeIdx + supremeKeyword.length);
+                    const after = locked.slice(supremeIdx + supremeKeyword.length);
+                    output = `${escapeHtml(before)}<span class="highlight">${escapeHtml(supreme)}</span>${escapeHtml(after)}`;
+                } else {
+                    output = escapeHtml(locked);
                 }
 
-                if (iteration >= finalText.length) {
-                    clearInterval(interval);
-                    if (callback) callback();
+                if (activeGlyph) {
+                    output += `<span class="typing-head">${escapeHtml(activeGlyph)}</span>`;
                 }
 
-                iteration += 1 / 2; // smooth reveal
-            }, speed);
+                element.innerHTML = output;
+            }
+
+            function typeNext() {
+                if (index >= fullText.length) {
+                    render(fullText, '');
+                    if (onDone) onDone();
+                    return;
+                }
+
+                const char = fullText[index];
+
+                // Spaces lock immediately
+                if (char === ' ') {
+                    lockedStr += ' ';
+                    index++;
+                    scrambleCount = 0;
+                    render(lockedStr, '');
+                    setTimeout(typeNext, 35);
+                    return;
+                }
+
+                if (scrambleCount < maxScramble) {
+                    // Show random glitching character at the typing point
+                    const randomGlyph = scramblePool[Math.floor(Math.random() * scramblePool.length)];
+                    render(lockedStr, randomGlyph);
+                    scrambleCount++;
+                    playBeep(1100 + Math.random() * 300, 0.015, 'sine', 0.012);
+                    setTimeout(typeNext, 28);
+                } else {
+                    // Lock in the actual letter and advance
+                    lockedStr += char;
+                    index++;
+                    scrambleCount = 0;
+                    render(lockedStr, '');
+                    playBeep(850 + Math.random() * 200, 0.02, 'sine', 0.02);
+                    setTimeout(typeNext, 45);
+                }
+            }
+
+            typeNext();
         }
 
         window.addEventListener('load', () => {
             setTimeout(() => {
-                scrambleDecrypt(typewriterEl, targetHeading);
+                typewriterWithScramble(typewriterEl, targetHeading, () => {
+                    if (descEl) descEl.classList.add('visible');
+                    if (techChipsEl) techChipsEl.classList.add('visible');
+                });
             }, 300);
         });
 
@@ -1212,15 +1283,15 @@
                         .split('')
                         .map((char, i) => {
                             if (char === ' ' || i < count) return char;
-                            return glyphs[Math.floor(Math.random() * glyphs.length)];
+                            return scramblePool[Math.floor(Math.random() * scramblePool.length)];
                         })
                         .join('');
                     if (count >= originalText.length) {
                         clearInterval(interval);
                         el.textContent = originalText;
                     }
-                    count += 1;
-                }, 30);
+                    count += 2;
+                }, 25);
             });
         });
 
