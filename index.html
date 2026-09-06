@@ -3,239 +3,379 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supreme Khanal | Portfolio</title>
+    <title>Supreme Khanal | Cyber Matrix Portfolio</title>
+    <meta name="description" content="Supreme Khanal - Undergraduate Electrical Engineering student crafting helpful tools, modern web apps and intelligent systems.">
+
+    <!-- Google Fonts: Space Grotesk (Headings) & JetBrains Mono (Hacker Matrix Font) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700;800&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/jpeg" href="supreme.jpg">
+
     <style>
-        /* Base Variables & Reset */
         :root {
-            --neon-green: #39ff14;
-            --neon-glow: rgba(57, 255, 20, 0.4);
-            --bg-color: #050505;
-            --surface-color: #111111;
-            --text-main: #ffffff;
-            --text-muted: #a0a0a0;
-            --glass-bg: rgba(20, 20, 20, 0.6);
-            --glass-border: rgba(57, 255, 20, 0.15);
+            --neon-green: #00ff66;
+            --neon-glow: rgba(0, 255, 102, 0.45);
+            --neon-dim: rgba(0, 255, 102, 0.12);
+            --bg-deep: #050806;
+            --bg-surface: rgba(10, 16, 12, 0.75);
+            --border-glass: rgba(0, 255, 102, 0.18);
+            --text-main: #e8fff2;
+            --text-muted: #8ba395;
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-display: 'Space Grotesk', sans-serif;
         }
 
-        * {
+        *, *::before, *::after {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             scroll-behavior: smooth;
         }
 
         body {
-            background-color: var(--bg-color);
+            background-color: var(--bg-deep);
             color: var(--text-main);
-            display: flex;
+            font-family: var(--font-display);
             min-height: 100vh;
             overflow-x: hidden;
             position: relative;
+            line-height: 1.6;
         }
 
-        /* Interactive Mouse Glow Background */
+        /* Scanline Overlay Effect */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 2;
+            opacity: 0.6;
+        }
+
+        /* Matrix Digital Rain Canvas */
+        #matrix-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.38;
+            transition: opacity 0.5s ease;
+        }
+
+        /* Interactive Mouse Glow Light */
         .mouse-glow {
             position: fixed;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(57,255,20,0.05) 0%, rgba(0,0,0,0) 70%);
+            width: 550px;
+            height: 550px;
+            background: radial-gradient(circle, rgba(0, 255, 102, 0.08) 0%, rgba(0, 0, 0, 0) 70%);
             border-radius: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
-            z-index: 0;
-            transition: top 0.1s ease-out, left 0.1s ease-out;
+            z-index: 1;
+            transition: transform 0.15s ease-out;
+            will-change: transform;
         }
 
-        /* Moving Background Particles */
-        .bg-animation {
+        /* HUD Status Bar at Top */
+        .hud-topbar {
             position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            z-index: -1;
-            overflow: hidden;
+            top: 0; left: 0; width: 100%;
+            height: 38px;
+            background: rgba(5, 8, 6, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-glass);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--neon-green);
+            z-index: 20;
+            letter-spacing: 1px;
         }
-        
-        .orb {
-            position: absolute;
+
+        .hud-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .status-dot {
+            width: 8px; height: 8px;
             border-radius: 50%;
-            filter: blur(80px);
-            animation: float 20s infinite ease-in-out alternate;
+            background: var(--neon-green);
+            box-shadow: 0 0 10px var(--neon-green);
+            animation: pulse-dot 2s infinite alternate;
+        }
+        @keyframes pulse-dot {
+            0% { opacity: 0.4; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1.15); }
         }
 
-        .orb1 { 
-            width: 40vw; height: 40vw; 
-            background: rgba(57, 255, 20, 0.05);
-            top: -10%; left: -10%; 
+        .hud-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
         }
-        .orb2 { 
-            width: 30vw; height: 30vw; 
-            background: rgba(0, 150, 255, 0.03); /* Subtle blue mix for depth */
-            bottom: -10%; right: -5%; 
-            animation-delay: -5s; 
-            animation-direction: alternate-reverse;
+        .hud-btn {
+            background: transparent;
+            border: 1px solid var(--border-glass);
+            color: var(--neon-green);
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+        .hud-btn:hover {
+            background: var(--neon-green);
+            color: #000;
+            box-shadow: 0 0 10px var(--neon-glow);
         }
 
-        @keyframes float {
-            0% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(100px, 50px) scale(1.2); }
-            100% { transform: translate(-50px, -80px) scale(0.9); }
+        /* Vertical Cyber Sidebar */
+        .sidebar {
+            width: 270px;
+            height: calc(100vh - 38px);
+            top: 38px;
+            background: rgba(6, 10, 8, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid var(--border-glass);
+            position: fixed;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 2.5rem 2rem;
+            z-index: 10;
         }
 
-        /* Scroll Reveal Animation Classes */
+        .nav-logo {
+            font-family: var(--font-mono);
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .nav-logo span {
+            color: var(--neon-green);
+            text-shadow: 0 0 12px var(--neon-glow);
+        }
+
+        .sidebar ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 1.6rem;
+            font-family: var(--font-mono);
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            letter-spacing: 1.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            border-left: 2px solid transparent;
+        }
+
+        .sidebar a::before {
+            content: '>';
+            color: var(--neon-green);
+            opacity: 0;
+            transform: translateX(-6px);
+            transition: all 0.25s ease;
+        }
+
+        .sidebar a:hover, .sidebar a.active-link {
+            color: var(--neon-green);
+            background: rgba(0, 255, 102, 0.05);
+            border-left: 2px solid var(--neon-green);
+            padding-left: 14px;
+            text-shadow: 0 0 8px rgba(0, 255, 102, 0.4);
+        }
+
+        .sidebar a:hover::before, .sidebar a.active-link::before {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .sidebar-footer {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            border-top: 1px solid var(--border-glass);
+            padding-top: 1.2rem;
+        }
+        .sidebar-footer a {
+            padding: 0;
+            display: inline;
+            color: var(--neon-green);
+            border: none;
+        }
+        .sidebar-footer a:hover {
+            background: none;
+        }
+
+        /* Main Content Container */
+        main {
+            margin-left: 270px;
+            margin-top: 38px;
+            padding: 3rem 4rem;
+            width: calc(100% - 270px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 3;
+            position: relative;
+        }
+
+        section {
+            min-height: 85vh;
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 4rem 0;
+        }
+
+        /* Scroll Reveal with Matrix Glitch Slide */
         .reveal {
             opacity: 0;
-            transform: translateY(40px);
-            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+            transform: translateY(35px);
+            transition: all 0.75s cubic-bezier(0.2, 0.9, 0.3, 1);
         }
         .reveal.active {
             opacity: 1;
             transform: translateY(0);
         }
 
-        /* Vertical Navbar */
-        .sidebar {
-            width: 280px;
-            height: 100vh;
-            background: rgba(10, 10, 10, 0.6);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-right: 1px solid var(--glass-border);
-            position: fixed;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 3rem;
-            z-index: 10;
-        }
-
-        .nav-logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--text-main);
-            margin-bottom: 3rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-        .nav-logo span { color: var(--neon-green); }
-
-        .sidebar ul {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
-
-        .sidebar a {
-            text-decoration: none;
-            color: var(--text-muted);
-            font-size: 1.1rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            letter-spacing: 1px;
-            position: relative;
-            padding-left: 0;
-        }
-
-        .sidebar a::before {
-            content: '';
-            position: absolute;
-            left: -15px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 0;
-            height: 2px;
-            background: var(--neon-green);
-            transition: all 0.3s ease;
-        }
-
-        .sidebar a:hover, .sidebar a.active-link {
-            color: var(--text-main);
-            padding-left: 15px;
-        }
-
-        .sidebar a:hover::before, .sidebar a.active-link::before {
-            width: 10px;
-            box-shadow: 0 0 10px var(--neon-green);
-        }
-
-        /* Main Content Area */
-        main {
-            margin-left: 280px;
-            padding: 4rem;
-            width: calc(100% - 280px);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            z-index: 1;
-        }
-
-        section {
-            min-height: 100vh;
-            width: 100%;
-            max-width: 1000px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 6rem 0;
-        }
-
-        /* Profile Section */
+        /* Profile Hero Section */
         #profile {
             align-items: center;
             text-align: center;
+            padding-top: 2rem;
         }
 
-        /* Profile Image Container - Adjusted for Zooming/Cropping */
+        /* Hacker Hexagonal/Circular Portrait Aura */
         .profile-img-container {
             width: 220px;
             height: 220px;
             border-radius: 50%;
-            padding: 4px;
-            background: linear-gradient(135deg, var(--neon-green), transparent, var(--neon-green));
-            margin-bottom: 2.5rem;
+            padding: 5px;
+            background: conic-gradient(from 0deg, var(--neon-green), transparent 60%, var(--neon-green));
+            margin-bottom: 2rem;
             position: relative;
-            box-shadow: 0 0 30px rgba(57, 255, 20, 0.2);
-            animation: pulse-ring 3s infinite alternate;
-            overflow: hidden; /* Important for the zoom effect */
+            box-shadow: 0 0 35px rgba(0, 255, 102, 0.25);
+            animation: rotate-border 8s linear infinite;
         }
 
-        @keyframes pulse-ring {
-            0% { box-shadow: 0 0 20px rgba(57, 255, 20, 0.2); transform: scale(1); }
-            100% { box-shadow: 0 0 40px rgba(57, 255, 20, 0.4); transform: scale(1.02); }
+        @keyframes rotate-border {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        /* Image Styling with CSS Zoom */
+        .profile-inner-frame {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+            background: #000;
+            position: relative;
+            /* counter-rotate to keep image upright */
+            animation: counter-rotate 8s linear infinite;
+        }
+
+        @keyframes counter-rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(-360deg); }
+        }
+
         .profile-img {
             width: 100%;
             height: 100%;
-            border-radius: 50%;
             object-fit: cover;
-            /* Adjust object-position to aim at your face (center 20% usually hits the head/shoulders perfectly) */
-            object-position: center 20%; 
-            /* Increase this scale value (e.g., 1.4 or 1.5) if you need it more zoomed in */
-            transform: scale(1.35); 
-            transition: transform 0.5s ease;
+            object-position: center 20%;
+            transform: scale(1.3);
+            transition: transform 0.5s ease, filter 0.5s ease;
+            filter: contrast(1.08) brightness(0.95);
         }
 
         .profile-img-container:hover .profile-img {
-            transform: scale(1.45); /* Zooms in slightly more on hover */
+            transform: scale(1.4);
+            filter: contrast(1.15) brightness(1.05) drop-shadow(0 0 10px var(--neon-green));
+        }
+
+        /* Radar scan effect over image */
+        .radar-sweep {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(180deg, transparent 65%, rgba(0, 255, 102, 0.2) 90%, rgba(0, 255, 102, 0.5) 100%);
+            animation: radar 3s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes radar {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+
+        /* Decrypted Matrix Text & Typewriter */
+        .terminal-header-tag {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--neon-green);
+            background: rgba(0, 255, 102, 0.08);
+            border: 1px solid var(--border-glass);
+            padding: 4px 14px;
+            border-radius: 20px;
+            margin-bottom: 1.2rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .typewriter-container {
-            font-size: 3rem;
+            font-family: var(--font-display);
+            font-size: clamp(2.4rem, 5.5vw, 4.2rem);
             font-weight: 800;
-            margin-bottom: 1.5rem;
-            min-height: 70px;
-            background: linear-gradient(to right, #fff, var(--text-muted));
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            margin-bottom: 1.2rem;
+            min-height: 75px;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+            line-height: 1.15;
+            text-shadow: 0 0 25px rgba(0, 255, 102, 0.25);
+        }
+
+        .typewriter-container .highlight {
+            color: var(--neon-green);
+            text-shadow: 0 0 20px var(--neon-glow);
         }
 
         .cursor {
             color: var(--neon-green);
-            -webkit-text-fill-color: var(--neon-green);
-            animation: blink 1s infinite;
+            font-family: var(--font-mono);
+            font-weight: 300;
+            animation: blink 0.85s infinite;
         }
 
         @keyframes blink {
@@ -243,142 +383,222 @@
             50% { opacity: 0; }
         }
 
+        /* Concise, Readable Description (as requested) */
         .description {
-            font-size: 1.15rem;
-            color: var(--text-muted);
-            line-height: 1.8;
+            font-size: clamp(1.05rem, 1.8vw, 1.25rem);
+            color: var(--text-main);
+            line-height: 1.7;
+            max-width: 680px;
+            font-weight: 400;
+            margin-bottom: 2rem;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+        }
+
+        .description strong {
+            color: var(--neon-green);
+            font-weight: 600;
+        }
+
+        /* Tech Chip Badges */
+        .tech-chips {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
             max-width: 650px;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 1s ease, transform 1s ease;
+            margin-bottom: 2.5rem;
         }
 
-        .description.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* Projects Section */
-        .section-header {
-            margin-bottom: 3rem;
+        .chip {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            background: rgba(0, 255, 102, 0.05);
+            border: 1px solid var(--border-glass);
+            color: var(--text-muted);
+            padding: 6px 14px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .chip:hover {
+            color: var(--neon-green);
+            border-color: var(--neon-green);
+            background: rgba(0, 255, 102, 0.12);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 102, 0.15);
+        }
+
+        /* Section Header */
+        .section-header {
+            margin-bottom: 2.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
         }
 
         .section-title {
-            font-size: 2.5rem;
+            font-family: var(--font-display);
+            font-size: 2.3rem;
             color: var(--text-main);
-            font-weight: 700;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title span {
+            color: var(--neon-green);
+            font-family: var(--font-mono);
+            font-size: 1.1rem;
+            font-weight: 400;
         }
 
         .section-line {
-            height: 2px;
-            background: var(--neon-green);
+            height: 1px;
+            background: linear-gradient(90deg, var(--neon-green), transparent);
             flex-grow: 1;
-            max-width: 200px;
-            box-shadow: 0 0 10px var(--neon-glow);
+            box-shadow: 0 0 8px var(--neon-glow);
         }
 
+        /* Cards Grid with 3D Tilt */
         .cards-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            perspective: 1000px;
         }
 
-        /* Glassmorphism Cards */
         .card {
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 20px;
-            padding: 2.5rem;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 18px;
+            padding: 2.4rem;
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: flex;
             flex-direction: column;
             gap: 1.2rem;
             position: relative;
             overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
         }
 
-      
         .card::before {
             content: '';
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at top right, rgba(57, 255, 20, 0.1), transparent 60%);
+            background: radial-gradient(circle at var(--mouse-x, 100%) var(--mouse-y, 0%), rgba(0, 255, 102, 0.12), transparent 60%);
             opacity: 0;
-            transition: opacity 0.4s ease;
-            pointer-events: none; /* THIS FIXES IT - lets you click through the glow */
+            transition: opacity 0.3s ease;
+            pointer-events: none;
         }
 
         .card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(57, 255, 20, 0.1);
-            border-color: rgba(57, 255, 20, 0.4);
+            transform: translateY(-8px) rotateX(2deg);
+            border-color: rgba(0, 255, 102, 0.45);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7), 0 0 25px rgba(0, 255, 102, 0.15);
         }
 
         .card:hover::before { opacity: 1; }
 
+        .card-tag {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--neon-green);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
         .card h3 {
+            font-family: var(--font-display);
             color: var(--text-main);
-            font-size: 1.5rem;
-            position: relative;
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
         }
-
-        .card h3::after {
-            content: '';
-            display: block;
-            width: 40px;
-            height: 2px;
-            background: var(--neon-green);
-            margin-top: 10px;
-            transition: width 0.3s ease;
-        }
-
-        .card:hover h3::after { width: 80px; }
 
         .card p {
             color: var(--text-muted);
-            font-size: 1rem;
+            font-size: 0.98rem;
             line-height: 1.7;
             flex-grow: 1;
-            position: relative;
+        }
+
+        .card-tags-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 0.5rem 0;
+        }
+
+        .tag-pill {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #bbb;
+            padding: 3px 9px;
+            border-radius: 4px;
         }
 
         .card-link {
             text-decoration: none;
-            color: var(--bg-color);
+            color: #000;
             background: var(--neon-green);
             padding: 0.8rem 1.8rem;
             border-radius: 30px;
             text-align: center;
+            font-family: var(--font-mono);
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             transition: all 0.3s ease;
             margin-top: auto;
             position: relative;
             z-index: 2;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             align-self: flex-start;
+            box-shadow: 0 0 15px rgba(0, 255, 102, 0.25);
         }
 
         .card-link:hover {
-            background: #fff;
-            color: var(--bg-color);
-            box-shadow: 0 0 20px var(--neon-glow);
-            transform: scale(1.05);
+            background: #ffffff;
+            color: #000;
+            box-shadow: 0 0 25px var(--neon-glow);
+            transform: scale(1.04);
         }
 
-        /* Updated Contact Section Styling */
-        .contact-info {
+        /* Contact Section */
+        .contact-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-glass);
+            border-radius: 24px;
+            padding: 3rem;
             display: flex;
             flex-direction: column;
+            gap: 2rem;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+        }
+
+        .contact-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 1.2rem;
-            margin-top: 1.5rem;
+            margin-top: 1rem;
             width: 100%;
         }
 
@@ -386,220 +606,675 @@
             text-decoration: none;
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 15px;
-            padding: 1.2rem;
+            gap: 16px;
+            padding: 1.2rem 1.6rem;
             background: rgba(255, 255, 255, 0.03);
-            border: 1px solid transparent;
-            border-radius: 12px;
+            border: 1px solid var(--border-glass);
+            border-radius: 14px;
             transition: all 0.3s ease;
             color: var(--text-main);
-            font-size: 1.05rem;
-            position: relative; /* BRINGS LINK TO FRONT */
-            z-index: 2;         /* BRINGS LINK TO FRONT */
+            font-size: 1rem;
+            font-family: var(--font-mono);
+            position: relative;
+            z-index: 2;
+        }
+
+        .social-link:hover {
+            background: rgba(0, 255, 102, 0.08);
+            border-color: var(--neon-green);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 255, 102, 0.15);
         }
 
         .contact-icon {
             color: var(--neon-green);
             transition: all 0.3s ease;
-        }
-
-        /* Hover Effects */
-        .social-link:hover {
-            background: rgba(57, 255, 20, 0.05);
-            border-color: var(--glass-border);
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(57, 255, 20, 0.1);
+            filter: drop-shadow(0 0 6px rgba(0, 255, 102, 0.4));
         }
 
         .social-link:hover .contact-icon {
-            transform: scale(1.1);
-            filter: drop-shadow(0 0 8px var(--neon-green));
+            transform: scale(1.15);
+            filter: drop-shadow(0 0 12px var(--neon-green));
         }
-        /* Responsive Design */
+
+        .copy-btn {
+            background: transparent;
+            border: 1px solid var(--border-glass);
+            color: var(--neon-green);
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-left: auto;
+            transition: all 0.2s ease;
+        }
+        .copy-btn:hover {
+            background: var(--neon-green);
+            color: #000;
+        }
+
+        /* Interactive Hacker Terminal HUD Modal */
+        #terminal-modal {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 440px;
+            max-width: calc(100vw - 48px);
+            height: 320px;
+            background: rgba(5, 10, 7, 0.94);
+            border: 1px solid var(--neon-green);
+            box-shadow: 0 0 35px rgba(0, 255, 102, 0.25), 0 20px 40px rgba(0,0,0,0.9);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            backdrop-filter: blur(16px);
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease;
+            transform: translateY(120%);
+            opacity: 0;
+            pointer-events: none;
+            font-family: var(--font-mono);
+        }
+
+        #terminal-modal.open {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .term-header {
+            background: rgba(0, 255, 102, 0.12);
+            border-bottom: 1px solid var(--border-glass);
+            padding: 8px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--neon-green);
+            letter-spacing: 1px;
+        }
+
+        .term-close {
+            background: none;
+            border: none;
+            color: var(--neon-green);
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1;
+        }
+
+        .term-body {
+            flex-grow: 1;
+            padding: 12px 14px;
+            overflow-y: auto;
+            font-size: 0.82rem;
+            color: #c9e8d4;
+            line-height: 1.5;
+        }
+
+        .term-input-row {
+            display: flex;
+            align-items: center;
+            padding: 8px 14px;
+            border-top: 1px solid var(--border-glass);
+            background: rgba(0, 0, 0, 0.4);
+            gap: 8px;
+        }
+
+        .term-input-row span {
+            color: var(--neon-green);
+            font-size: 0.85rem;
+        }
+
+        .term-input {
+            background: none;
+            border: none;
+            color: var(--text-main);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            flex-grow: 1;
+            outline: none;
+        }
+
+        /* Floating Toggle for Terminal */
+        .terminal-float-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: rgba(6, 12, 8, 0.9);
+            border: 1px solid var(--neon-green);
+            color: var(--neon-green);
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            padding: 10px 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            z-index: 90;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.2);
+            transition: all 0.3s ease;
+        }
+        .terminal-float-btn:hover {
+            background: var(--neon-green);
+            color: #000;
+            box-shadow: 0 0 30px var(--neon-glow);
+            transform: scale(1.05);
+        }
+
+        /* Responsive Mobile Styles */
         @media (max-width: 900px) {
-            body { flex-direction: column; }
             .sidebar {
-                width: 100%; height: auto; position: fixed; top: 0;
-                flex-direction: row; padding: 1.2rem; border-right: none;
-                border-bottom: 1px solid var(--glass-border);
+                width: 100%;
+                height: auto;
+                position: fixed;
+                top: 38px;
+                left: 0;
+                flex-direction: row;
+                padding: 1rem 1.5rem;
+                border-right: none;
+                border-bottom: 1px solid var(--border-glass);
                 justify-content: space-between;
                 align-items: center;
             }
-            .nav-logo { margin-bottom: 0; font-size: 1.2rem; }
-            .sidebar ul { flex-direction: row; justify-content: flex-end; gap: 1.5rem; }
+            .sidebar-footer { display: none; }
+            .sidebar ul {
+                flex-direction: row;
+                gap: 1rem;
+            }
+            .sidebar a {
+                padding: 4px 8px;
+                font-size: 0.85rem;
+            }
             .sidebar a::before { display: none; }
-            .sidebar a:hover, .sidebar a.active-link { padding-left: 0; color: var(--neon-green); }
-            main { margin-left: 0; margin-top: 80px; width: 100%; padding: 2rem; }
-            .typewriter-container { font-size: 2rem; min-height: 50px; }
-            section { padding: 4rem 0; min-height: auto; }
-            .mouse-glow { display: none; } /* Hide on mobile for performance */
+            main {
+                margin-left: 0;
+                margin-top: 100px;
+                width: 100%;
+                padding: 2rem 1.5rem;
+            }
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            .mouse-glow { display: none; }
+            .terminal-float-btn { bottom: 16px; right: 16px; font-size: 0.75rem; padding: 8px 14px; }
         }
     </style>
 </head>
 <body>
 
+    <!-- Scanline Effect Overlay -->
+    <div class="scanlines"></div>
+
+    <!-- Matrix Digital Rain Background Canvas -->
+    <canvas id="matrix-canvas"></canvas>
+
     <!-- Interactive Mouse Glow -->
     <div class="mouse-glow" id="mouseGlow"></div>
 
-    <!-- Moving Background Particles -->
-    <div class="bg-animation">
-        <div class="orb orb1"></div>
-        <div class="orb orb2"></div>
-    </div>
+    <!-- Top HUD Bar -->
+    <header class="hud-topbar">
+        <div class="hud-status">
+            <div class="status-dot"></div>
+            <span>SYS_ONLINE: SUPREME_KHANAL // KATHMANDU</span>
+        </div>
+        <div class="hud-controls">
+            <button class="hud-btn" id="matrixToggleBtn" title="Toggle Matrix Rain">RAIN [ON]</button>
+            <button class="hud-btn" id="sfxToggleBtn" title="Toggle Audio Sound FX">SFX [OFF]</button>
+            <span id="systemClock">00:00:00 UTC</span>
+        </div>
+    </header>
 
-    <!-- Vertical Navigation -->
+    <!-- Cyber Sidebar Navigation -->
     <nav class="sidebar">
-        <div class="nav-logo">Sup<span>reme</span></div>
-        <ul>
-            <li><a href="#profile" class="nav-link active-link">Profile</a></li>
-            <li><a href="#projects" class="nav-link">Projects</a></li>
-            <li><a href="#contact" class="nav-link">Contact</a></li>
-        </ul>
+        <div>
+            <div class="nav-logo">
+                Sup<span>reme</span>
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; margin-bottom: 2.5rem;">
+                ELECTRICAL_ENG // TOOLS
+            </div>
+
+            <ul>
+                <li><a href="#profile" class="nav-link active-link" data-scramble="PROFILE">01. Profile</a></li>
+                <li><a href="#projects" class="nav-link" data-scramble="PROJECTS">02. Projects</a></li>
+                <li><a href="#contact" class="nav-link" data-scramble="CONTACT">03. Contact</a></li>
+            </ul>
+        </div>
+
+        <div class="sidebar-footer">
+            <div>SYS.VER: 2.6.4</div>
+            <div style="margin-top: 4px;">&copy; <span id="currentYear">2026</span> Supreme Khanal</div>
+            <div style="margin-top: 8px;">
+                <a href="#terminal" onclick="toggleTerminal(); return false;">[OPEN TERMINAL]</a>
+            </div>
+        </div>
     </nav>
 
+    <!-- Main Content -->
     <main>
-        <!-- Profile Section -->
-        <section id="profile" class="reveal">
+        <!-- 1. Profile Section -->
+        <section id="profile" class="reveal active">
+            <div class="terminal-header-tag">
+                <span class="status-dot" style="width:6px;height:6px;"></span>
+                <span>ENGINEERING &bull; DEV TOOLS &bull; AI</span>
+            </div>
+
+            <!-- Profile Image Container with Cyber Radar -->
             <div class="profile-img-container">
-                <!-- Ensure you upload your image here -->
-                <img src="supreme.jpg" alt="Supreme Khanal" class="profile-img">
+                <div class="profile-inner-frame">
+                    <img src="supreme.jpg" alt="Supreme Khanal" class="profile-img">
+                    <div class="radar-sweep"></div>
+                </div>
             </div>
-            
+
+            <!-- Hacker Decrypt Typewriter Header -->
             <div class="typewriter-container">
-                <span id="typewriter"></span><span class="cursor">|</span>
+                <span id="hacker-typewriter"></span><span class="cursor">_</span>
             </div>
-            
+
+            <!-- Concise & Readable Description (Prompt Specific) -->
             <p class="description" id="desc">
-                An undergraduate student studying electrical engineering. My hobbies include making helpful tools with a handful of coding languages, utilizing foundational knowledge in new Ai technlogies integrating it with Modern applications. I blend engineering precision with creative web design.
+                An <strong>undergraduate student studying electrical engineering</strong> who loves crafting <strong>helpful tools</strong>, modern web experiences, and AI-driven applications.
             </p>
+
+            <!-- Tech Badges -->
+            <div class="tech-chips">
+                <div class="chip"><span>⚡</span> Electrical Engineering</div>
+                <div class="chip"><span>🛠️</span> Daily Driven Tools</div>
+                <div class="chip"><span>🤖</span> AI Integration</div>
+                <div class="chip"><span>💻</span> Modern Web Apps</div>
+                <div class="chip"><span>🎯</span> CBT Examination Portal</div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
+                <a href="#projects" class="card-link" data-scramble="EXPLORE PROJECTS">
+                    <span>Explore Projects</span> &rarr;
+                </a>
+                <a href="mailto:khanalsupreme3@gmail.com" class="card-link" style="background: transparent; color: var(--neon-green); border: 1px solid var(--neon-green);" data-scramble="INITIATE CONTACT">
+                    <span>Contact Me</span>
+                </a>
+            </div>
         </section>
 
-        <!-- Projects Section -->
+        <!-- 2. Projects Section -->
         <section id="projects" class="reveal">
             <div class="section-header">
-                <h2 class="section-title">Projects</h2>
+                <h2 class="section-title"><span>// 02.</span> Projects</h2>
                 <div class="section-line"></div>
             </div>
-            
+
             <div class="cards-grid">
-                <!-- Project Card 1 -->
-                <div class="card">
-                    <h3>CBT Portal</h3>
-                    <p>A comprehensive Computer-Based Testing portal designed to upload question sets and generate an exam environment, fully analyzed with the help of AI to provide deep insights.</p>
-                    <a href="./CBT/index.html" class="card-link">View Project</a>
+                <!-- Project Card 1: CBT Portal -->
+                <div class="card" onmousemove="handleCardTilt(event, this)" onmouseleave="resetCardTilt(this)">
+                    <div class="card-tag">
+                        <span>●</span> FEATURED // CLIENT DEPLOYED
+                    </div>
+                    <h3>CBT Examination Portal</h3>
+                    <p>
+                        A comprehensive Computer-Based Testing portal engineered to upload custom question sets, simulate realistic timed exam environments, and provide deep analytical insights via AI algorithms.
+                    </p>
+                    <div class="card-tags-row">
+                        <span class="tag-pill">AI Analytics</span>
+                        <span class="tag-pill">Exam Simulation</span>
+                        <span class="tag-pill">Timer & Scoring</span>
+                        <span class="tag-pill">JavaScript</span>
+                    </div>
+                    <a href="./CBT/index.html" class="card-link">
+                        <span>Launch CBT Portal</span> &rarr;
+                    </a>
                 </div>
 
-                <!-- Project Card 2 -->
-                <div class="card">
-                    <h3>New Project</h3>
-                    <p>A new idea is being conceptualized and developed.</p>
-                    <a href="#" target="_blank" class="card-link">View Project</a>
+                <!-- Project Card 2: Interactive Terminal & Automation Tools -->
+                <div class="card" onmousemove="handleCardTilt(event, this)" onmouseleave="resetCardTilt(this)">
+                    <div class="card-tag">
+                        <span>●</span> UTILITY // CLI SYSTEM
+                    </div>
+                    <h3>Cyber Matrix HUD & Tools</h3>
+                    <p>
+                        A suite of custom-built daily developer productivity tools, terminal interfaces, and automated scripts tailored for rapid prototyping and hardware-software interop.
+                    </p>
+                    <div class="card-tags-row">
+                        <span class="tag-pill">Matrix Canvas</span>
+                        <span class="tag-pill">Web Audio API</span>
+                        <span class="tag-pill">CLI Console</span>
+                        <span class="tag-pill">Productivity</span>
+                    </div>
+                    <button type="button" onclick="toggleTerminal()" class="card-link" style="cursor: pointer; border: none;">
+                        <span>Open Terminal CLI</span> &rarr;
+                    </button>
+                </div>
+
+                <!-- Project Card 3: Electrical & Hardware Lab -->
+                <div class="card" onmousemove="handleCardTilt(event, this)" onmouseleave="resetCardTilt(this)">
+                    <div class="card-tag">
+                        <span>●</span> HARDWARE // RESEARCH
+                    </div>
+                    <h3>Electrical Systems & Smart Tools</h3>
+                    <p>
+                        Academic and practical hardware projects including circuit design, power systems analysis, sensor telemetry, and microcontroller firmware integration.
+                    </p>
+                    <div class="card-tags-row">
+                        <span class="tag-pill">Electrical Eng</span>
+                        <span class="tag-pill">Microcontrollers</span>
+                        <span class="tag-pill">Sensors</span>
+                        <span class="tag-pill">Firmware</span>
+                    </div>
+                    <a href="mailto:khanalsupreme3@gmail.com?subject=Inquiry regarding Electrical Hardware Projects" class="card-link">
+                        <span>Discuss Engineering</span> &rarr;
+                    </a>
                 </div>
             </div>
         </section>
 
-        <!-- Contact Section -->
+        <!-- 3. Contact Section -->
         <section id="contact" class="reveal">
             <div class="section-header">
-                <h2 class="section-title">My Contacts</h2>
+                <h2 class="section-title"><span>// 03.</span> Connect</h2>
                 <div class="section-line"></div>
             </div>
 
-            <div class="card">
-                <h3 style="color: var(--neon-green)">Let's Connect</h3>
-                <p>Feel free to reach out for collaborations, engineering projects, or software inquiries. I'm always open to discussing new ideas.</p>
-                
+            <div class="contact-card">
+                <div>
+                    <div class="card-tag" style="margin-bottom: 0.5rem;">
+                        <span>●</span> COMM_CHANNELS_OPEN
+                    </div>
+                    <h3 style="font-size: 2rem; font-weight: 800; letter-spacing: -0.5px; color: #fff;">
+                        Let&apos;s Build Something Incredible
+                    </h3>
+                    <p style="color: var(--text-muted); font-size: 1.05rem; margin-top: 0.5rem;">
+                        Open for collaborations, electrical engineering inquiries, software development, or custom tools.
+                    </p>
+                </div>
+
                 <div class="contact-info">
-                    <!-- Email Item -->
-                    <a href="mailto:khanalsupreme3@gmail.com" class="contact-item social-link">
-                        <svg class="contact-icon" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- Email Item with Instant 1-Click Copy -->
+                    <div class="social-link">
+                        <svg class="contact-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                             <polyline points="22,6 12,13 2,6"></polyline>
                         </svg>
-                        <span>khanalsupreme3@gmail.com</span>
-                    </a>
-                    
+                        <a href="mailto:khanalsupreme3@gmail.com" style="color: inherit; text-decoration: none; overflow: hidden; text-overflow: ellipsis;">
+                            khanalsupreme3@gmail.com
+                        </a>
+                        <button class="copy-btn" onclick="copyEmail(this)" title="Copy email address">COPY</button>
+                    </div>
+
                     <!-- LinkedIn Item -->
-                    <a href="https://www.linkedin.com/in/supreme-khanal-a233b1337/" target="_blank" class="contact-item social-link">
-                        <svg class="contact-icon" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <a href="https://www.linkedin.com/in/supreme-khanal-a233b1337/" target="_blank" rel="noopener noreferrer" class="social-link">
+                        <svg class="contact-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
                             <rect x="2" y="9" width="4" height="12"></rect>
                             <circle cx="4" cy="4" r="2"></circle>
                         </svg>
                         <span>linkedin.com/in/supremekhanal</span>
+                        <span style="margin-left: auto; color: var(--neon-green); font-size: 0.8rem;">&rarr;</span>
                     </a>
                 </div>
-                
-                <a href="mailto:khanalsupreme3@gmail.com" class="card-link" style="margin-top: 1.5rem; align-self: center;">Send an Email</a>
+
+                <div style="display: flex; justify-content: center; margin-top: 1rem;">
+                    <a href="mailto:khanalsupreme3@gmail.com" class="card-link" style="padding: 1rem 2.4rem; font-size: 0.95rem;">
+                        <span>Transmit Message</span> &rarr;
+                    </a>
+                </div>
             </div>
         </section>
     </main>
 
+    <!-- Floating Terminal HUD Button -->
+    <button class="terminal-float-btn" onclick="toggleTerminal()" title="Toggle Interactive Terminal">
+        <span>&gt;_</span> TERMINAL [CLI]
+    </button>
+
+    <!-- Interactive Hacker Terminal HUD Modal -->
+    <div id="terminal-modal">
+        <div class="term-header">
+            <span>SUPREME_KHANAL // BASH_v2.6</span>
+            <button class="term-close" onclick="toggleTerminal()" title="Close Terminal">&times;</button>
+        </div>
+        <div class="term-body" id="termOutput">
+            <div>Welcome to Supreme&apos;s Cyber Matrix Shell.</div>
+            <div>Type <span style="color:var(--neon-green)">help</span> to list available commands.</div>
+            <div style="margin-top: 6px; color: var(--text-muted);">&gt; sys.ready()</div>
+        </div>
+        <div class="term-input-row">
+            <span>&gt;</span>
+            <input type="text" id="termInput" class="term-input" placeholder="Type a command (help, cbt, about, clear)..." autofocus>
+        </div>
+    </div>
+
+    <!-- SCRIPT LOGIC -->
     <script>
-        // 1. Mouse Glow Effect
+        // ==========================================
+        // 1. SYNTHESIZED CYBER AUDIO (Web Audio API)
+        // ==========================================
+        let sfxEnabled = false;
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx && AudioContext) {
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playBeep(freq = 800, duration = 0.04, type = 'sine', gainVal = 0.04) {
+            if (!sfxEnabled) return;
+            initAudio();
+            if (!audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                // Ignore audio errors
+            }
+        }
+
+        const sfxBtn = document.getElementById('sfxToggleBtn');
+        sfxBtn.addEventListener('click', () => {
+            sfxEnabled = !sfxEnabled;
+            sfxBtn.textContent = sfxEnabled ? 'SFX [ON]' : 'SFX [OFF]';
+            if (sfxEnabled) {
+                initAudio();
+                playBeep(950, 0.08, 'triangle', 0.1);
+            }
+        });
+
+        // ==========================================
+        // 2. MATRIX DIGITAL RAIN (Optimized Canvas)
+        // ==========================================
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        let matrixActive = true;
+
+        // Katakana, Hex & Binary Glyphs
+        const matrixChars = 'ｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ0123456789ABCDEF<>{}/*+=~!@#$%';
+        const fontSize = 16;
+        let columns = 0;
+        let drops = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            columns = Math.floor(canvas.width / fontSize);
+            drops = [];
+            for (let i = 0; i < columns; i++) {
+                drops[i] = Math.floor(Math.random() * -canvas.height / fontSize);
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function drawMatrix() {
+            if (!matrixActive) return;
+
+            // Semi-transparent fade to create phosphor trails
+            ctx.fillStyle = 'rgba(5, 8, 6, 0.07)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.font = `${fontSize}px 'JetBrains Mono', monospace`;
+
+            for (let i = 0; i < drops.length; i++) {
+                const char = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+                const x = i * fontSize;
+                const y = drops[i] * fontSize;
+
+                // Glowing bright leading head character
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(char, x, y);
+
+                // Trail character in matrix green
+                ctx.fillStyle = '#00ff66';
+                ctx.fillText(char, x, y - fontSize);
+
+                if (y > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        let matrixInterval = setInterval(drawMatrix, 45);
+
+        const matrixToggleBtn = document.getElementById('matrixToggleBtn');
+        matrixToggleBtn.addEventListener('click', () => {
+            matrixActive = !matrixActive;
+            canvas.style.opacity = matrixActive ? '0.38' : '0';
+            matrixToggleBtn.textContent = matrixActive ? 'RAIN [ON]' : 'RAIN [OFF]';
+            playBeep(650, 0.05);
+        });
+
+        // ==========================================
+        // 3. HACKER MATRIX TEXT DECRYPTION EFFECT
+        // ==========================================
+        const targetHeading = "Hello, I am Supreme Khanal.";
+        const typewriterEl = document.getElementById('hacker-typewriter');
+        const glyphs = '0123456789ABCDEF$#@%&<>!~+=*';
+
+        function scrambleDecrypt(element, finalText, callback) {
+            let iteration = 0;
+            const speed = 25; // ms per step
+
+            const interval = setInterval(() => {
+                element.innerHTML = finalText
+                    .split("")
+                    .map((letter, index) => {
+                        if (index < iteration) {
+                            if (finalText.slice(index).startsWith("Supreme")) {
+                                return `<span class="highlight">${letter}</span>`;
+                            }
+                            return letter;
+                        }
+                        return glyphs[Math.floor(Math.random() * glyphs.length)];
+                    })
+                    .join("");
+
+                if (iteration % 3 === 0) {
+                    playBeep(1200 + Math.random() * 400, 0.02, 'sine', 0.02);
+                }
+
+                if (iteration >= finalText.length) {
+                    clearInterval(interval);
+                    if (callback) callback();
+                }
+
+                iteration += 1 / 2; // smooth reveal
+            }, speed);
+        }
+
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                scrambleDecrypt(typewriterEl, targetHeading);
+            }, 300);
+        });
+
+        // Add interactive scramble on nav links and buttons
+        document.querySelectorAll('[data-scramble]').forEach((el) => {
+            const originalText = el.textContent;
+            el.addEventListener('mouseenter', () => {
+                playBeep(900, 0.02, 'sine', 0.02);
+                let count = 0;
+                const interval = setInterval(() => {
+                    el.textContent = originalText
+                        .split('')
+                        .map((char, i) => {
+                            if (char === ' ' || i < count) return char;
+                            return glyphs[Math.floor(Math.random() * glyphs.length)];
+                        })
+                        .join('');
+                    if (count >= originalText.length) {
+                        clearInterval(interval);
+                        el.textContent = originalText;
+                    }
+                    count += 1;
+                }, 30);
+            });
+        });
+
+        // ==========================================
+        // 4. MOUSE GLOW & 3D CARD TILT
+        // ==========================================
         const mouseGlow = document.getElementById('mouseGlow');
         document.addEventListener('mousemove', (e) => {
             mouseGlow.style.left = e.clientX + 'px';
             mouseGlow.style.top = e.clientY + 'px';
         });
 
-        // 2. Typewriter Effect
-        const textToType = "Hello, I am Supreme Khanal.";
-        const typeTarget = document.getElementById("typewriter");
-        const description = document.getElementById("desc");
-        let i = 0;
-        const typingSpeed = 80; // Slightly faster for better UX
+        function handleCardTilt(e, card) {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
 
-        function typeWriter() {
-            if (i < textToType.length) {
-                typeTarget.innerHTML += textToType.charAt(i);
-                i++;
-                setTimeout(typeWriter, typingSpeed);
-            } else {
-                // Trigger the fade-in animation for description
-                description.classList.add('show');
-            }
+            card.style.setProperty('--mouse-x', `${x}px`);
+            card.style.setProperty('--mouse-y', `${y}px`);
+
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const rotateX = ((y - centerY) / centerY) * -5;
+            const rotateY = ((x - centerX) / centerX) * 5;
+
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-8px)`;
         }
 
-        // Initialize typing effect on load
-        window.onload = () => {
-            setTimeout(typeWriter, 400); 
-        };
+        function resetCardTilt(card) {
+            card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0)';
+        }
 
-        // 3. Scroll Reveal Animations (Intersection Observer)
+        // ==========================================
+        // 5. SCROLL REVEAL & ACTIVE NAV OBSERVER
+        // ==========================================
         const reveals = document.querySelectorAll('.reveal');
-        const revealOptions = {
-            threshold: 0.15,
-            rootMargin: "0px 0px -50px 0px"
-        };
-
-        const revealOnScroll = new IntersectionObserver(function(entries, observer) {
-            entries.forEach(entry => {
-                if (!entry.isIntersecting) {
-                    return;
-                } else {
-                    entry.target.classList.add('active');
-                    // Optional: stop observing once revealed
-                    // observer.unobserve(entry.target);
-                }
-            });
-        }, revealOptions);
-
-        reveals.forEach(reveal => {
-            revealOnScroll.observe(reveal);
-        });
-
-        // 4. Update Active Nav Link on Scroll
         const sections = document.querySelectorAll('section');
         const navLinks = document.querySelectorAll('.nav-link');
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, { threshold: 0.15 });
+
+        reveals.forEach(r => observer.observe(r));
 
         window.addEventListener('scroll', () => {
             let current = '';
             sections.forEach(section => {
                 const sectionTop = section.offsetTop;
-                const sectionHeight = section.clientHeight;
-                if (pageYOffset >= (sectionTop - sectionHeight / 3)) {
+                if (pageYOffset >= (sectionTop - 250)) {
                     current = section.getAttribute('id');
                 }
             });
@@ -611,6 +1286,132 @@
                 }
             });
         });
+
+        // ==========================================
+        // 6. SYSTEM CLOCK & 1-CLICK EMAIL COPY
+        // ==========================================
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toTimeString().split(' ')[0] + ' UTC';
+            document.getElementById('systemClock').textContent = timeString;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        function copyEmail(btn) {
+            navigator.clipboard.writeText('khanalsupreme3@gmail.com').then(() => {
+                const prev = btn.textContent;
+                btn.textContent = 'COPIED!';
+                btn.style.background = 'var(--neon-green)';
+                btn.style.color = '#000';
+                playBeep(1400, 0.08);
+                setTimeout(() => {
+                    btn.textContent = prev;
+                    btn.style.background = 'transparent';
+                    btn.style.color = 'var(--neon-green)';
+                }, 2000);
+            });
+        }
+
+        // ==========================================
+        // 7. INTERACTIVE HACKER TERMINAL MODAL (CLI)
+        // ==========================================
+        const termModal = document.getElementById('terminal-modal');
+        const termInput = document.getElementById('termInput');
+        const termOutput = document.getElementById('termOutput');
+
+        function toggleTerminal() {
+            termModal.classList.toggle('open');
+            playBeep(750, 0.05);
+            if (termModal.classList.contains('open')) {
+                setTimeout(() => termInput.focus(), 150);
+            }
+        }
+
+        // Global shortcut: Ctrl+K or ` opens terminal
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey && e.key === 'k') || (e.key === '`' && document.activeElement !== termInput)) {
+                e.preventDefault();
+                toggleTerminal();
+            }
+        });
+
+        termInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const command = termInput.value.trim().toLowerCase();
+                termInput.value = '';
+                runCommand(command);
+            }
+        });
+
+        function printTerm(text, color = '#c9e8d4') {
+            const line = document.createElement('div');
+            line.style.color = color;
+            line.innerHTML = text;
+            termOutput.appendChild(line);
+            termOutput.scrollTop = termOutput.scrollHeight;
+        }
+
+        function runCommand(cmd) {
+            printTerm(`&gt; <span style="color:var(--neon-green)">${cmd}</span>`);
+            playBeep(1100, 0.03);
+
+            switch (cmd) {
+                case 'help':
+                    printTerm("AVAILABLE COMMANDS:");
+                    printTerm("  <span style='color:var(--neon-green)'>about</span>       - Print Supreme's profile bio");
+                    printTerm("  <span style='color:var(--neon-green)'>cbt</span>         - Launch CBT Examination Portal");
+                    printTerm("  <span style='color:var(--neon-green)'>projects</span>    - List all highlighted projects");
+                    printTerm("  <span style='color:var(--neon-green)'>contact</span>     - View email &amp; LinkedIn details");
+                    printTerm("  <span style='color:var(--neon-green)'>matrix</span>      - Toggle background matrix digital rain");
+                    printTerm("  <span style='color:var(--neon-green)'>sfx</span>         - Toggle audio sound effects");
+                    printTerm("  <span style='color:var(--neon-green)'>clear</span>       - Clear the terminal screen");
+                    break;
+
+                case 'about':
+                    printTerm("Supreme Khanal: Undergraduate studying electrical engineering.");
+                    printTerm("Interests: crafting helpful tools, modern web apps, and AI systems.");
+                    break;
+
+                case 'cbt':
+                    printTerm("Launching CBT Examination Portal...");
+                    window.location.href = './CBT/index.html';
+                    break;
+
+                case 'projects':
+                    printTerm("1. CBT Examination Portal -> ./CBT/index.html");
+                    printTerm("2. Cyber Matrix HUD &amp; Developer Tools");
+                    printTerm("3. Electrical Hardware Systems &amp; Circuit Telemetry");
+                    break;
+
+                case 'contact':
+                    printTerm("Email: khanalsupreme3@gmail.com");
+                    printTerm("LinkedIn: linkedin.com/in/supremekhanal");
+                    break;
+
+                case 'matrix':
+                    matrixToggleBtn.click();
+                    printTerm(`Matrix rain is now: ${matrixActive ? 'ENABLED' : 'DISABLED'}`);
+                    break;
+
+                case 'sfx':
+                    sfxBtn.click();
+                    printTerm(`Sound FX is now: ${sfxEnabled ? 'ENABLED' : 'DISABLED'}`);
+                    break;
+
+                case 'clear':
+                    termOutput.innerHTML = '';
+                    break;
+
+                case '':
+                    break;
+
+                default:
+                    printTerm(`Command not recognized: '${cmd}'. Type <span style='color:var(--neon-green)'>help</span> for commands.`, '#ff6666');
+            }
+        }
     </script>
 </body>
 </html>
