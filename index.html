@@ -61,8 +61,8 @@
             width: 100vw; height: 100vh;
             z-index: 0;
             pointer-events: none;
-            opacity: 0.22; /* Soft ambient rain - slightly enhanced opacity */
-            transition: opacity 0.5s ease;
+            opacity: 0; /* Hidden initially, appears first when Open Portfolio reaches 100% */
+            transition: opacity 0.8s ease;
         }
 
         /* Typewriter Head & Character Fade-In */
@@ -783,7 +783,7 @@
         }
 
         /* ==========================================
-           BOOT SCREEN (Cinematic BIOS-style Loader)
+           MATRIX INTRO SCREEN (Open Portfolio & Genuine Loader)
            ========================================== */
         body.booting {
             overflow: hidden !important;
@@ -798,120 +798,143 @@
             background: #030604;
             z-index: 99999;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 1.25rem;
+            padding: 1.5rem;
             font-family: var(--font-mono);
             color: var(--neon-green);
             opacity: 1;
             visibility: visible;
-            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s ease;
+            transition: opacity 0.85s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.85s ease;
             user-select: none;
-            cursor: pointer;
         }
         #boot-screen.fade-out {
             opacity: 0;
             visibility: hidden;
             pointer-events: none;
         }
-        .boot-box {
+
+        .matrix-intro-card {
             width: 100%;
-            max-width: 580px;
-            background: rgba(5, 10, 6, 0.95);
-            border: 1px solid rgba(0, 255, 102, 0.35);
-            border-radius: 8px;
-            padding: 1.75rem;
-            box-shadow: 0 0 40px rgba(0, 255, 102, 0.12), inset 0 0 20px rgba(0, 255, 102, 0.03);
-            position: relative;
-        }
-        .boot-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid rgba(0, 255, 102, 0.2);
-            padding-bottom: 0.75rem;
-            margin-bottom: 1.25rem;
-            font-size: 0.75rem;
-            letter-spacing: 1px;
-            color: var(--neon-green);
-        }
-        .boot-header-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .boot-logs {
-            min-height: 140px;
-            max-height: 180px;
-            overflow-y: hidden;
+            max-width: 480px;
             display: flex;
             flex-direction: column;
-            gap: 6px;
-            font-size: 0.78rem;
-            line-height: 1.5;
-            margin-bottom: 1.5rem;
+            align-items: center;
+            text-align: center;
+            position: relative;
         }
-        .boot-line {
-            opacity: 0;
-            transform: translateX(-6px);
-            animation: bootLineAppear 0.25s forwards ease-out;
-            word-break: break-word;
+
+        .intro-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.72rem;
+            color: var(--neon-green);
+            letter-spacing: 1.5px;
+            margin-bottom: 2rem;
+            opacity: 0.85;
         }
-        .boot-line .tag {
-            color: #7affb2;
+
+        .intro-action-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .cyber-entry-btn {
+            position: relative;
+            background: rgba(0, 255, 102, 0.05);
+            color: var(--neon-green);
+            border: 1px solid var(--neon-green);
+            border-radius: 4px;
+            padding: 15px 36px;
+            font-family: var(--font-mono);
+            font-size: 1rem;
             font-weight: 700;
-            margin-right: 6px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            box-shadow: 0 0 25px rgba(0, 255, 102, 0.2), inset 0 0 15px rgba(0, 255, 102, 0.05);
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
         }
-        .boot-line.highlight {
-            color: #ffffff;
-            text-shadow: 0 0 8px var(--neon-green);
+
+        .cyber-entry-btn:hover {
+            background: var(--neon-green);
+            color: #050806;
+            box-shadow: 0 0 45px rgba(0, 255, 102, 0.65);
+            transform: translateY(-2px) scale(1.03);
         }
-        @keyframes bootLineAppear {
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+
+        .btn-bracket {
+            transition: transform 0.2s ease;
         }
-        .boot-progress-wrapper {
-            margin-top: 1rem;
+
+        .cyber-entry-btn:hover .btn-bracket {
+            transform: translateX(4px);
         }
-        .boot-progress-info {
+
+        .intro-hint {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        /* Genuine Hacker Loading Bar Group */
+        .intro-loader-group {
+            width: 100%;
+            max-width: 440px;
+            animation: fadeInLoader 0.4s ease forwards;
+        }
+        @keyframes fadeInLoader {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loader-status-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-size: 0.75rem;
             letter-spacing: 1px;
-            margin-bottom: 8px;
-            color: var(--text-muted);
+            margin-bottom: 10px;
+            color: #d1f7de;
         }
-        .boot-progress-track {
+
+        .loader-pct {
+            color: var(--neon-green);
+            font-weight: 700;
+            text-shadow: 0 0 10px var(--neon-green);
+        }
+
+        .loader-track {
             width: 100%;
             height: 10px;
             background: rgba(0, 255, 102, 0.06);
-            border: 1px solid rgba(0, 255, 102, 0.4);
+            border: 1px solid rgba(0, 255, 102, 0.45);
             border-radius: 5px;
             overflow: hidden;
             position: relative;
-            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+            box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.9), 0 0 15px rgba(0, 255, 102, 0.15);
         }
-        .boot-progress-bar {
+
+        .loader-fill {
             height: 100%;
             width: 0%;
-            background: linear-gradient(90deg, #008f39 0%, #00ff66 70%, #99ffcc 100%);
-            box-shadow: 0 0 16px var(--neon-green);
-            transition: width 0.18s ease-out;
+            background: linear-gradient(90deg, #008f39 0%, #00ff66 75%, #b3ffcc 100%);
+            box-shadow: 0 0 18px var(--neon-green);
+            transition: width 0.1s linear;
         }
-        .boot-skip-hint {
-            margin-top: 1.25rem;
-            font-size: 0.68rem;
+
+        .loader-subtext {
+            font-size: 0.65rem;
             color: var(--text-muted);
-            text-align: center;
             letter-spacing: 1px;
-            transition: color 0.2s ease;
-        }
-        .boot-skip-hint:hover {
-            color: var(--neon-green);
+            margin-top: 10px;
         }
 
         /* Mobile Bottom Nav (hidden on desktop) */
@@ -1035,42 +1058,38 @@
                 width: 95% !important;
                 max-height: 80vh !important;
             }
-            .boot-box {
-                padding: 1.25rem;
-            }
-            .boot-logs {
-                font-size: 0.72rem;
-                min-height: 130px;
-            }
         }
     </style>
 </head>
 <body class="booting">
 
-    <!-- Cinematic Boot Sequence Overlay -->
+    <!-- Cyber Intro Entry Screen -->
     <div id="boot-screen">
-        <div class="boot-box">
-            <div class="boot-header">
-                <div class="boot-header-title">
-                    <span class="status-dot"></span>
-                    <span>CYBER_BIOS v2.6.4 // BOOTLOADER</span>
-                </div>
-                <span>SECURE_SYS</span>
+        <div class="matrix-intro-card" id="introCard">
+            <div class="intro-tag">
+                <span class="status-dot"></span>
+                <span>SYSTEM_ONLINE // MATRIX_v2.6.4</span>
             </div>
-            <div class="boot-logs" id="bootLogs">
-                <!-- Dynamic boot lines will appear here -->
+
+            <!-- 1. Initial State: Open Portfolio Button -->
+            <div id="introActionGroup" class="intro-action-group">
+                <button id="openPortfolioBtn" class="cyber-entry-btn">
+                    <span>OPEN PORTFOLIO</span>
+                    <span class="btn-bracket">&gt;</span>
+                </button>
+                <div class="intro-hint">CLICK TO ENTER THE MATRIX</div>
             </div>
-            <div class="boot-progress-wrapper">
-                <div class="boot-progress-info">
-                    <span id="bootStatusText">INITIALIZING SYSTEM ARCHITECTURE...</span>
-                    <span id="bootPct">0%</span>
+
+            <!-- 2. Loading State: Appears Upon Clicking -->
+            <div id="introLoaderGroup" class="intro-loader-group" style="display: none;">
+                <div class="loader-status-row">
+                    <span id="loaderStatusText">INITIALIZING MATRIX LINK...</span>
+                    <span id="loaderPct" class="loader-pct">0%</span>
                 </div>
-                <div class="boot-progress-track">
-                    <div class="boot-progress-bar" id="bootProgressBar"></div>
+                <div class="loader-track">
+                    <div class="loader-fill" id="loaderFill"></div>
                 </div>
-            </div>
-            <div class="boot-skip-hint" id="bootSkipHint">
-                [CLICK ANYWHERE TO BYPASS &bull; SFX ACTIVE]
+                <div class="loader-subtext">CONNECTING TO SUPREME_KHANAL // KATHMANDU</div>
             </div>
         </div>
     </div>
@@ -1348,7 +1367,7 @@
             }
         }
 
-        function playBeep(freq = 800, duration = 0.04, type = 'sine', gainVal = 0.04) {
+        function playBeep(freq = 800, duration = 0.03, type = 'sine', gainVal = 0.018) {
             if (!sfxEnabled) return;
             initAudio();
             if (!audioCtx) return;
@@ -1368,63 +1387,88 @@
             }
         }
 
-        // Boot sequence audio synthesizers
-        function playBootHum() {
+        // Immersive atmospheric Matrix sound synthesis (subtle, non-overwhelming)
+        let matrixDroneOsc = null;
+        let matrixDroneGain = null;
+
+        function startMatrixAtmosphere() {
             if (!sfxEnabled) return;
             initAudio();
             if (!audioCtx) return;
             try {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(50, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 1.2);
-                gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.045, audioCtx.currentTime + 0.3);
-                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 2.0);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 2.0);
+                // Gentle, warm low sub-bass drone
+                matrixDroneOsc = audioCtx.createOscillator();
+                matrixDroneGain = audioCtx.createGain();
+                const filter = audioCtx.createBiquadFilter();
+
+                matrixDroneOsc.type = 'sine';
+                matrixDroneOsc.frequency.setValueAtTime(55, audioCtx.currentTime);
+                matrixDroneOsc.frequency.exponentialRampToValueAtTime(75, audioCtx.currentTime + 1.8);
+
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(140, audioCtx.currentTime);
+
+                matrixDroneGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+                matrixDroneGain.gain.linearRampToValueAtTime(0.022, audioCtx.currentTime + 0.3);
+
+                matrixDroneOsc.connect(filter);
+                filter.connect(matrixDroneGain);
+                matrixDroneGain.connect(audioCtx.destination);
+
+                matrixDroneOsc.start();
             } catch (e) {}
         }
 
-        function playBootBlip(freq = 1200) {
+        function stopMatrixAtmosphere() {
+            if (!matrixDroneGain || !audioCtx) return;
+            try {
+                matrixDroneGain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.8);
+                setTimeout(() => {
+                    if (matrixDroneOsc) {
+                        try { matrixDroneOsc.stop(); } catch (e) {}
+                        matrixDroneOsc = null;
+                        matrixDroneGain = null;
+                    }
+                }, 850);
+            } catch (e) {}
+        }
+
+        function playMatrixTick(freq = 1100) {
             if (!sfxEnabled) return;
             initAudio();
             if (!audioCtx) return;
             try {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-                osc.type = 'triangle';
+                osc.type = 'sine';
                 osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(freq * 1.4, audioCtx.currentTime + 0.05);
-                gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.06);
+                gain.gain.setValueAtTime(0.015, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.035);
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 osc.start();
-                osc.stop(audioCtx.currentTime + 0.06);
+                osc.stop(audioCtx.currentTime + 0.035);
             } catch (e) {}
         }
 
-        function playBootCompleteChime() {
+        function playMatrixEntryChime() {
             if (!sfxEnabled) return;
             initAudio();
             if (!audioCtx) return;
             try {
-                const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
-                notes.forEach((freq, idx) => {
+                // Soft ethereal Matrix warp chord (gentle sine waves)
+                const chord = [440, 554.37, 659.25, 880];
+                chord.forEach((freq, idx) => {
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
                     osc.type = 'sine';
-                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.08);
-                    gain.gain.setValueAtTime(0.05, audioCtx.currentTime + idx * 0.08);
-                    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + idx * 0.08 + 0.4);
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.07);
+                    gain.gain.setValueAtTime(0.02, audioCtx.currentTime + idx * 0.07);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + idx * 0.07 + 0.6);
                     osc.connect(gain);
                     gain.connect(audioCtx.destination);
-                    osc.start(audioCtx.currentTime + idx * 0.08);
-                    osc.stop(audioCtx.currentTime + idx * 0.08 + 0.4);
+                    osc.start(audioCtx.currentTime + idx * 0.07);
+                    osc.stop(audioCtx.currentTime + idx * 0.07 + 0.6);
                 });
             } catch (e) {}
         }
@@ -1588,99 +1632,132 @@
         }
 
         // ==========================================
-        // 3. BOOT SEQUENCE & INITIALIZATION
+        // 3. MATRIX PORTFOLIO ENTRY & GENUINE LOADER
         // ==========================================
-        function runBootSequence() {
+        function initPortfolioEntry() {
+            const openBtn = document.getElementById('openPortfolioBtn');
+            const introActionGroup = document.getElementById('introActionGroup');
+            const introLoaderGroup = document.getElementById('introLoaderGroup');
+            const loaderStatusText = document.getElementById('loaderStatusText');
+            const loaderPct = document.getElementById('loaderPct');
+            const loaderFill = document.getElementById('loaderFill');
             const bootScreen = document.getElementById('boot-screen');
-            const bootLogs = document.getElementById('bootLogs');
-            const bootProgressBar = document.getElementById('bootProgressBar');
-            const bootPct = document.getElementById('bootPct');
-            const bootStatusText = document.getElementById('bootStatusText');
+            const matrixCanvas = document.getElementById('matrix-canvas');
             const profileContainer = document.getElementById('profileContainer');
 
             if (!bootScreen) {
                 document.body.classList.remove('booting');
+                if (matrixCanvas) matrixCanvas.style.opacity = '0.22';
                 startTypewriter();
                 return;
             }
 
-            let isBootComplete = false;
+            let isEntryTriggered = false;
 
-            const bootSteps = [
-                { delay: 100, text: '<span class="tag">[INIT]</span> Initializing SupremeOS Cyber Kernel v2.6.4...', pct: 15, status: 'LOADING CORE MODULES...', freq: 880 },
-                { delay: 600, text: '<span class="tag">[OK]</span> Matrix neural rain engine loaded into GPU buffer', pct: 38, status: 'CALIBRATING RAIN SHADERS...', freq: 1050 },
-                { delay: 1200, text: '<span class="tag">[OK]</span> Synthesized sound subsystem: SFX ONLINE [ACTIVE]', pct: 62, status: 'INITIALIZING AUDIO ENGINE...', freq: 1250 },
-                { delay: 1800, text: '<span class="tag">[OK]</span> Telemetry: Kathmandu Station // Electrical Engineering', pct: 85, status: 'MOUNTING REPOSITORIES & PROJECTS...', freq: 1450 },
-                { delay: 2400, text: '<span class="tag highlight">[READY]</span> Boot integrity verified. Launching interface...', pct: 100, status: 'SYSTEM BOOT COMPLETE', freq: 1760 }
-            ];
+            if (openBtn) {
+                openBtn.addEventListener('click', () => {
+                    if (isEntryTriggered) return;
+                    isEntryTriggered = true;
 
-            // Audio unlock on user interaction (handles browser autoplay policies)
-            const unlockAudio = () => {
-                initAudio();
-                playBootHum();
-            };
-            window.addEventListener('click', unlockAudio, { once: true });
-            window.addEventListener('touchstart', unlockAudio, { once: true });
-            window.addEventListener('keydown', unlockAudio, { once: true });
+                    initAudio();
+                    startMatrixAtmosphere();
+                    playMatrixTick(1200);
 
-            playBootHum();
+                    // Morph: Hide button, reveal genuine loading bar
+                    introActionGroup.style.opacity = '0';
+                    introActionGroup.style.transform = 'scale(0.96)';
+                    setTimeout(() => {
+                        introActionGroup.style.display = 'none';
+                        introLoaderGroup.style.display = 'block';
+                        runGenuineLoading();
+                    }, 220);
+                });
+            }
 
-            const finishBoot = () => {
-                if (isBootComplete) return;
-                isBootComplete = true;
+            function runGenuineLoading() {
+                // Genuine milestones that feel authentic and responsive (~1.9s total)
+                const milestones = [
+                    { target: 19, status: 'INITIALIZING MATRIX LINK...', duration: 260, freq: 880 },
+                    { target: 44, status: 'ESTABLISHING NEURAL FEED...', duration: 380, freq: 1020 },
+                    { target: 71, status: 'DOWNLOADING TELEMETRY & SCHEMATICS...', duration: 420, freq: 1180 },
+                    { target: 91, status: 'COMPILING MATRIX RAIN SHADERS...', duration: 360, freq: 1350 },
+                    { target: 100, status: 'ACCESS GRANTED // WELCOME', duration: 280, freq: 1600 }
+                ];
 
-                playBootCompleteChime();
-                if (bootProgressBar) bootProgressBar.style.width = '100%';
-                if (bootPct) bootPct.textContent = '100%';
-                if (bootStatusText) bootStatusText.textContent = 'ACCESS GRANTED';
+                let currentPct = 0;
+                let stepIdx = 0;
+
+                function processMilestone() {
+                    if (stepIdx >= milestones.length) {
+                        finishEntry();
+                        return;
+                    }
+
+                    const m = milestones[stepIdx];
+                    loaderStatusText.textContent = m.status;
+                    playMatrixTick(m.freq);
+
+                    const startPct = currentPct;
+                    const diff = m.target - startPct;
+                    const startTime = performance.now();
+
+                    function animateProgress(time) {
+                        const elapsed = time - startTime;
+                        const progress = Math.min(1, elapsed / m.duration);
+                        // Ease-out cubic for realistic, smooth data arrival
+                        const ease = 1 - Math.pow(1 - progress, 3);
+                        currentPct = Math.round(startPct + diff * ease);
+
+                        loaderPct.textContent = currentPct + '%';
+                        loaderFill.style.width = currentPct + '%';
+
+                        if (progress < 1) {
+                            requestAnimationFrame(animateProgress);
+                        } else {
+                            currentPct = m.target;
+                            loaderPct.textContent = currentPct + '%';
+                            loaderFill.style.width = currentPct + '%';
+                            stepIdx++;
+                            setTimeout(processMilestone, 90);
+                        }
+                    }
+
+                    requestAnimationFrame(animateProgress);
+                }
+
+                processMilestone();
+            }
+
+            function finishEntry() {
+                stopMatrixAtmosphere();
+                playMatrixEntryChime();
 
                 setTimeout(() => {
+                    // 1. Matrix digital rain appears FIRST
+                    if (matrixCanvas) {
+                        matrixCanvas.style.opacity = '0.22';
+                    }
+
+                    // 2. Dissolve intro screen
                     bootScreen.classList.add('fade-out');
                     document.body.classList.remove('booting');
 
-                    // Smooth profile image fade-in
-                    if (profileContainer) {
-                        profileContainer.classList.add('booted');
-                    }
-
-                    // Launch hacker typewriter decrypt sequence
+                    // 3. Elements fade in along with name & profile
                     setTimeout(() => {
-                        startTypewriter();
-                    }, 350);
+                        if (profileContainer) {
+                            profileContainer.classList.add('booted');
+                        }
 
-                    setTimeout(() => {
-                        bootScreen.style.display = 'none';
-                    }, 850);
-                }, 400);
-            };
+                        setTimeout(() => {
+                            startTypewriter();
+                        }, 280);
 
-            bootSteps.forEach(step => {
-                setTimeout(() => {
-                    if (isBootComplete) return;
-                    const line = document.createElement('div');
-                    line.className = 'boot-line' + (step.pct === 100 ? ' highlight' : '');
-                    line.innerHTML = step.text;
-                    bootLogs.appendChild(line);
-                    bootLogs.scrollTop = bootLogs.scrollHeight;
-
-                    if (bootProgressBar) bootProgressBar.style.width = step.pct + '%';
-                    if (bootPct) bootPct.textContent = step.pct + '%';
-                    if (bootStatusText) bootStatusText.textContent = step.status;
-
-                    playBootBlip(step.freq);
-                }, step.delay);
-            });
-
-            // Auto finish after last boot step completes
-            setTimeout(() => {
-                if (!isBootComplete) finishBoot();
-            }, 2900);
-
-            // Click or tap anywhere on boot screen to skip / finish early
-            bootScreen.addEventListener('click', () => {
-                unlockAudio();
-                finishBoot();
-            });
+                        setTimeout(() => {
+                            bootScreen.style.display = 'none';
+                        }, 700);
+                    }, 260);
+                }, 350);
+            }
         }
 
         function startTypewriter() {
@@ -1693,19 +1770,19 @@
         // Add subtle cyber SFX to all clickable options when hovered
         function setupHoverSFX() {
             const targets = document.querySelectorAll(
-                'a, button, .card, .chip, .terminal-float-btn, .hud-btn, .mobile-nav-link, .nav-link, .tag-pill, .card-link, .term-quick-btn, [data-scramble]'
+                'a, button, .card, .chip, .terminal-float-btn, .hud-btn, .mobile-nav-link, .nav-link, .tag-pill, .card-link, .term-quick-btn, .cyber-entry-btn, [data-scramble]'
             );
             targets.forEach(el => {
                 el.addEventListener('mouseenter', () => {
                     if (!sfxEnabled) return;
-                    playBeep(950 + Math.random() * 250, 0.02, 'sine', 0.02);
+                    playBeep(950 + Math.random() * 250, 0.02, 'sine', 0.015);
                 });
             });
         }
 
         window.addEventListener('load', () => {
             setupHoverSFX();
-            runBootSequence();
+            initPortfolioEntry();
         });
 
         // Add interactive scramble on nav links and buttons
