@@ -61,7 +61,7 @@
             width: 100vw; height: 100vh;
             z-index: 0;
             pointer-events: none;
-            opacity: 0.16; /* Soft ambient rain so foreground text remains perfectly readable */
+            opacity: 0.22; /* Soft ambient rain - slightly enhanced opacity */
             transition: opacity 0.5s ease;
         }
 
@@ -314,6 +314,17 @@
         .profile-img-container:hover {
             transform: translateY(-6px) scale(1.02);
             box-shadow: 0 0 45px rgba(0, 255, 102, 0.4);
+        }
+
+        /* Profile image initial boot fade-in */
+        .profile-boot-fade {
+            opacity: 0;
+            transform: scale(0.92) translateY(12px);
+            transition: opacity 1.1s cubic-bezier(0.2, 0.9, 0.3, 1), transform 1.1s cubic-bezier(0.2, 0.9, 0.3, 1), box-shadow 0.4s ease;
+        }
+        .profile-boot-fade.booted {
+            opacity: 1;
+            transform: scale(1) translateY(0);
         }
 
         .profile-inner-frame {
@@ -771,46 +782,298 @@
             transform: scale(1.05);
         }
 
-        /* Responsive Mobile Styles */
+        /* ==========================================
+           BOOT SCREEN (Cinematic BIOS-style Loader)
+           ========================================== */
+        body.booting {
+            overflow: hidden !important;
+        }
+
+        #boot-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #030604;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 1.25rem;
+            font-family: var(--font-mono);
+            color: var(--neon-green);
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s ease;
+            user-select: none;
+            cursor: pointer;
+        }
+        #boot-screen.fade-out {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .boot-box {
+            width: 100%;
+            max-width: 580px;
+            background: rgba(5, 10, 6, 0.95);
+            border: 1px solid rgba(0, 255, 102, 0.35);
+            border-radius: 8px;
+            padding: 1.75rem;
+            box-shadow: 0 0 40px rgba(0, 255, 102, 0.12), inset 0 0 20px rgba(0, 255, 102, 0.03);
+            position: relative;
+        }
+        .boot-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(0, 255, 102, 0.2);
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.25rem;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            color: var(--neon-green);
+        }
+        .boot-header-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .boot-logs {
+            min-height: 140px;
+            max-height: 180px;
+            overflow-y: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 0.78rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+        }
+        .boot-line {
+            opacity: 0;
+            transform: translateX(-6px);
+            animation: bootLineAppear 0.25s forwards ease-out;
+            word-break: break-word;
+        }
+        .boot-line .tag {
+            color: #7affb2;
+            font-weight: 700;
+            margin-right: 6px;
+        }
+        .boot-line.highlight {
+            color: #ffffff;
+            text-shadow: 0 0 8px var(--neon-green);
+        }
+        @keyframes bootLineAppear {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        .boot-progress-wrapper {
+            margin-top: 1rem;
+        }
+        .boot-progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+        }
+        .boot-progress-track {
+            width: 100%;
+            height: 10px;
+            background: rgba(0, 255, 102, 0.06);
+            border: 1px solid rgba(0, 255, 102, 0.4);
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+        }
+        .boot-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #008f39 0%, #00ff66 70%, #99ffcc 100%);
+            box-shadow: 0 0 16px var(--neon-green);
+            transition: width 0.18s ease-out;
+        }
+        .boot-skip-hint {
+            margin-top: 1.25rem;
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            text-align: center;
+            letter-spacing: 1px;
+            transition: color 0.2s ease;
+        }
+        .boot-skip-hint:hover {
+            color: var(--neon-green);
+        }
+
+        /* Mobile Bottom Nav (hidden on desktop) */
+        .mobile-bottom-nav {
+            display: none;
+        }
+
+        /* Responsive Mobile Styles (<= 900px) */
         @media (max-width: 900px) {
+            /* Hide Cluttered HUD on Mobile (sys_online, sfx, rain, clock) */
+            .hud-topbar {
+                display: none !important;
+            }
+
+            /* Hide Desktop Sidebar on Mobile */
             .sidebar {
-                width: 100%;
-                height: auto;
+                display: none !important;
+            }
+
+            /* Sleek Fixed Glassmorphic Bottom Navigation Bar */
+            .mobile-bottom-nav {
+                display: flex !important;
                 position: fixed;
-                top: 38px;
+                bottom: 0;
                 left: 0;
-                flex-direction: row;
-                padding: 1rem 1.5rem;
-                border-right: none;
-                border-bottom: 1px solid var(--border-glass);
-                justify-content: space-between;
-                align-items: center;
-            }
-            .sidebar-footer { display: none; }
-            .sidebar ul {
-                flex-direction: row;
-                gap: 1rem;
-            }
-            .sidebar a {
-                padding: 4px 8px;
-                font-size: 0.85rem;
-            }
-            .sidebar a::before { display: none; }
-            main {
-                margin-left: 0;
-                margin-top: 100px;
                 width: 100%;
-                padding: 2rem 1.5rem;
+                height: 62px;
+                background: rgba(5, 9, 6, 0.94);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                border-top: 1px solid var(--border-glass);
+                box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.8), 0 -1px 12px rgba(0, 255, 102, 0.12);
+                z-index: 999;
+                justify-content: space-around;
+                align-items: center;
+                padding: 0 0.5rem;
+                padding-bottom: max(4px, env(safe-area-inset-bottom));
             }
+            .mobile-nav-link {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 4px;
+                color: var(--text-muted);
+                text-decoration: none;
+                font-family: var(--font-mono);
+                font-size: 0.72rem;
+                font-weight: 600;
+                letter-spacing: 0.75px;
+                padding: 6px 0;
+                border-radius: 8px;
+                transition: all 0.25s ease;
+            }
+            .mobile-nav-link .nav-icon {
+                font-size: 1.15rem;
+                line-height: 1;
+                transition: transform 0.2s ease;
+            }
+            .mobile-nav-link:hover,
+            .mobile-nav-link.active-link {
+                color: var(--neon-green);
+                text-shadow: 0 0 10px var(--neon-green);
+                background: rgba(0, 255, 102, 0.08);
+            }
+            .mobile-nav-link.active-link .nav-icon {
+                transform: translateY(-2px);
+                filter: drop-shadow(0 0 6px var(--neon-green));
+            }
+
+            /* Main Container Adjustments for Mobile */
+            main {
+                margin-left: 0 !important;
+                margin-top: 0 !important;
+                margin-bottom: 70px !important;
+                width: 100% !important;
+                padding: 1.5rem 1rem !important;
+            }
+            section {
+                padding: 2.5rem 0 !important;
+                min-height: auto !important;
+            }
+            #profile {
+                min-height: calc(100vh - 80px) !important;
+                justify-content: center !important;
+                padding-top: 1.5rem !important;
+                padding-bottom: 2rem !important;
+            }
+            .profile-img-container {
+                width: 160px !important;
+                height: 160px !important;
+                margin-bottom: 1.25rem !important;
+            }
+            .typewriter-container {
+                font-size: 1.6rem !important;
+                min-height: 52px !important;
+                margin-bottom: 1.5rem !important;
+            }
+
+            /* Hide Cluttered Description & Tech Badges on Mobile */
+            .description,
+            .tech-chips {
+                display: none !important;
+            }
+
             .cards-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr !important;
+                gap: 1.25rem !important;
             }
-            .mouse-glow { display: none; }
-            .terminal-float-btn { bottom: 16px; right: 16px; font-size: 0.75rem; padding: 8px 14px; }
+            .mouse-glow {
+                display: none !important;
+            }
+            .terminal-float-btn {
+                bottom: 76px !important;
+                right: 16px !important;
+                font-size: 0.72rem !important;
+                padding: 7px 12px !important;
+            }
+            .terminal-window {
+                width: 95% !important;
+                max-height: 80vh !important;
+            }
+            .boot-box {
+                padding: 1.25rem;
+            }
+            .boot-logs {
+                font-size: 0.72rem;
+                min-height: 130px;
+            }
         }
     </style>
 </head>
-<body>
+<body class="booting">
+
+    <!-- Cinematic Boot Sequence Overlay -->
+    <div id="boot-screen">
+        <div class="boot-box">
+            <div class="boot-header">
+                <div class="boot-header-title">
+                    <span class="status-dot"></span>
+                    <span>CYBER_BIOS v2.6.4 // BOOTLOADER</span>
+                </div>
+                <span>SECURE_SYS</span>
+            </div>
+            <div class="boot-logs" id="bootLogs">
+                <!-- Dynamic boot lines will appear here -->
+            </div>
+            <div class="boot-progress-wrapper">
+                <div class="boot-progress-info">
+                    <span id="bootStatusText">INITIALIZING SYSTEM ARCHITECTURE...</span>
+                    <span id="bootPct">0%</span>
+                </div>
+                <div class="boot-progress-track">
+                    <div class="boot-progress-bar" id="bootProgressBar"></div>
+                </div>
+            </div>
+            <div class="boot-skip-hint" id="bootSkipHint">
+                [CLICK ANYWHERE TO BYPASS &bull; SFX ACTIVE]
+            </div>
+        </div>
+    </div>
 
     <!-- Scanline Effect Overlay -->
     <div class="scanlines"></div>
@@ -829,7 +1092,7 @@
         </div>
         <div class="hud-controls">
             <button class="hud-btn" id="matrixToggleBtn" title="Toggle Matrix Rain">RAIN [ON]</button>
-            <button class="hud-btn" id="sfxToggleBtn" title="Toggle Audio Sound FX">SFX [OFF]</button>
+            <button class="hud-btn" id="sfxToggleBtn" title="Toggle Audio Sound FX">SFX [ON]</button>
             <span id="systemClock">00:00:00 UTC</span>
         </div>
     </header>
@@ -860,6 +1123,22 @@
         </div>
     </nav>
 
+    <!-- Sleek Mobile Fixed Bottom Navigation Bar -->
+    <nav id="mobile-bottom-nav" class="mobile-bottom-nav" aria-label="Mobile Navigation">
+        <a href="#profile" class="mobile-nav-link active-link" data-scramble="PROFILE">
+            <span class="nav-icon">👤</span>
+            <span>Profile</span>
+        </a>
+        <a href="#projects" class="mobile-nav-link" data-scramble="PROJECTS">
+            <span class="nav-icon">💻</span>
+            <span>Projects</span>
+        </a>
+        <a href="#contact" class="mobile-nav-link" data-scramble="CONTACT">
+            <span class="nav-icon">📡</span>
+            <span>Contact</span>
+        </a>
+    </nav>
+
     <!-- Main Content -->
     <main>
         <!-- 1. Profile Section -->
@@ -870,7 +1149,7 @@
             </div>
 
             <!-- Profile Image Container -->
-            <div class="profile-img-container">
+            <div class="profile-img-container profile-boot-fade" id="profileContainer">
                 <div class="profile-inner-frame">
                     <img src="supreme.jpg" alt="Supreme Khanal" class="profile-img">
                 </div>
@@ -1056,7 +1335,7 @@
         // ==========================================
         // 1. SYNTHESIZED CYBER AUDIO (Web Audio API)
         // ==========================================
-        let sfxEnabled = false;
+        let sfxEnabled = true; // Default ON as requested
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx = null;
 
@@ -1087,6 +1366,67 @@
             } catch (e) {
                 // Ignore audio errors
             }
+        }
+
+        // Boot sequence audio synthesizers
+        function playBootHum() {
+            if (!sfxEnabled) return;
+            initAudio();
+            if (!audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(50, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 1.2);
+                gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.045, audioCtx.currentTime + 0.3);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 2.0);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 2.0);
+            } catch (e) {}
+        }
+
+        function playBootBlip(freq = 1200) {
+            if (!sfxEnabled) return;
+            initAudio();
+            if (!audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(freq * 1.4, audioCtx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.06);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.06);
+            } catch (e) {}
+        }
+
+        function playBootCompleteChime() {
+            if (!sfxEnabled) return;
+            initAudio();
+            if (!audioCtx) return;
+            try {
+                const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+                notes.forEach((freq, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.08);
+                    gain.gain.setValueAtTime(0.05, audioCtx.currentTime + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + idx * 0.08 + 0.4);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(audioCtx.currentTime + idx * 0.08);
+                    osc.stop(audioCtx.currentTime + idx * 0.08 + 0.4);
+                });
+            } catch (e) {}
         }
 
         const sfxBtn = document.getElementById('sfxToggleBtn');
@@ -1247,13 +1587,125 @@
             typeNext();
         }
 
-        window.addEventListener('load', () => {
+        // ==========================================
+        // 3. BOOT SEQUENCE & INITIALIZATION
+        // ==========================================
+        function runBootSequence() {
+            const bootScreen = document.getElementById('boot-screen');
+            const bootLogs = document.getElementById('bootLogs');
+            const bootProgressBar = document.getElementById('bootProgressBar');
+            const bootPct = document.getElementById('bootPct');
+            const bootStatusText = document.getElementById('bootStatusText');
+            const profileContainer = document.getElementById('profileContainer');
+
+            if (!bootScreen) {
+                document.body.classList.remove('booting');
+                startTypewriter();
+                return;
+            }
+
+            let isBootComplete = false;
+
+            const bootSteps = [
+                { delay: 100, text: '<span class="tag">[INIT]</span> Initializing SupremeOS Cyber Kernel v2.6.4...', pct: 15, status: 'LOADING CORE MODULES...', freq: 880 },
+                { delay: 600, text: '<span class="tag">[OK]</span> Matrix neural rain engine loaded into GPU buffer', pct: 38, status: 'CALIBRATING RAIN SHADERS...', freq: 1050 },
+                { delay: 1200, text: '<span class="tag">[OK]</span> Synthesized sound subsystem: SFX ONLINE [ACTIVE]', pct: 62, status: 'INITIALIZING AUDIO ENGINE...', freq: 1250 },
+                { delay: 1800, text: '<span class="tag">[OK]</span> Telemetry: Kathmandu Station // Electrical Engineering', pct: 85, status: 'MOUNTING REPOSITORIES & PROJECTS...', freq: 1450 },
+                { delay: 2400, text: '<span class="tag highlight">[READY]</span> Boot integrity verified. Launching interface...', pct: 100, status: 'SYSTEM BOOT COMPLETE', freq: 1760 }
+            ];
+
+            // Audio unlock on user interaction (handles browser autoplay policies)
+            const unlockAudio = () => {
+                initAudio();
+                playBootHum();
+            };
+            window.addEventListener('click', unlockAudio, { once: true });
+            window.addEventListener('touchstart', unlockAudio, { once: true });
+            window.addEventListener('keydown', unlockAudio, { once: true });
+
+            playBootHum();
+
+            const finishBoot = () => {
+                if (isBootComplete) return;
+                isBootComplete = true;
+
+                playBootCompleteChime();
+                if (bootProgressBar) bootProgressBar.style.width = '100%';
+                if (bootPct) bootPct.textContent = '100%';
+                if (bootStatusText) bootStatusText.textContent = 'ACCESS GRANTED';
+
+                setTimeout(() => {
+                    bootScreen.classList.add('fade-out');
+                    document.body.classList.remove('booting');
+
+                    // Smooth profile image fade-in
+                    if (profileContainer) {
+                        profileContainer.classList.add('booted');
+                    }
+
+                    // Launch hacker typewriter decrypt sequence
+                    setTimeout(() => {
+                        startTypewriter();
+                    }, 350);
+
+                    setTimeout(() => {
+                        bootScreen.style.display = 'none';
+                    }, 850);
+                }, 400);
+            };
+
+            bootSteps.forEach(step => {
+                setTimeout(() => {
+                    if (isBootComplete) return;
+                    const line = document.createElement('div');
+                    line.className = 'boot-line' + (step.pct === 100 ? ' highlight' : '');
+                    line.innerHTML = step.text;
+                    bootLogs.appendChild(line);
+                    bootLogs.scrollTop = bootLogs.scrollHeight;
+
+                    if (bootProgressBar) bootProgressBar.style.width = step.pct + '%';
+                    if (bootPct) bootPct.textContent = step.pct + '%';
+                    if (bootStatusText) bootStatusText.textContent = step.status;
+
+                    playBootBlip(step.freq);
+                }, step.delay);
+            });
+
+            // Auto finish after last boot step completes
             setTimeout(() => {
-                typewriterWithScramble(typewriterEl, targetHeading, () => {
-                    if (descEl) descEl.classList.add('visible');
-                    if (techChipsEl) techChipsEl.classList.add('visible');
+                if (!isBootComplete) finishBoot();
+            }, 2900);
+
+            // Click or tap anywhere on boot screen to skip / finish early
+            bootScreen.addEventListener('click', () => {
+                unlockAudio();
+                finishBoot();
+            });
+        }
+
+        function startTypewriter() {
+            typewriterWithScramble(typewriterEl, targetHeading, () => {
+                if (descEl) descEl.classList.add('visible');
+                if (techChipsEl) techChipsEl.classList.add('visible');
+            });
+        }
+
+        // Add subtle cyber SFX to all clickable options when hovered
+        function setupHoverSFX() {
+            const targets = document.querySelectorAll(
+                'a, button, .card, .chip, .terminal-float-btn, .hud-btn, .mobile-nav-link, .nav-link, .tag-pill, .card-link, .term-quick-btn, [data-scramble]'
+            );
+            targets.forEach(el => {
+                el.addEventListener('mouseenter', () => {
+                    if (!sfxEnabled) return;
+                    playBeep(950 + Math.random() * 250, 0.02, 'sine', 0.02);
                 });
-            }, 300);
+            });
+        }
+
+        window.addEventListener('load', () => {
+            setupHoverSFX();
+            runBootSequence();
         });
 
         // Add interactive scramble on nav links and buttons
@@ -1314,6 +1766,7 @@
         const reveals = document.querySelectorAll('.reveal');
         const sections = document.querySelectorAll('section');
         const navLinks = document.querySelectorAll('.nav-link');
+        const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
 
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -1335,6 +1788,13 @@
             });
 
             navLinks.forEach(link => {
+                link.classList.remove('active-link');
+                if (link.getAttribute('href').includes(current)) {
+                    link.classList.add('active-link');
+                }
+            });
+
+            mobileNavLinks.forEach(link => {
                 link.classList.remove('active-link');
                 if (link.getAttribute('href').includes(current)) {
                     link.classList.add('active-link');
